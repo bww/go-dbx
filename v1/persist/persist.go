@@ -23,7 +23,9 @@ type persister struct {
 }
 
 func New(cxt dbx.Context) Persister {
-	return &persister{cxt}
+	fm := entity.NewFieldMapper(entity.Tag)
+	gen := entity.NewGenerator(fm)
+	return &persister{cxt: cxt, fm: fm, gen: gen}
 }
 
 func (p *persister) Context(cxts ...dbx.Context) dbx.Context {

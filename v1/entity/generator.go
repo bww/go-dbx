@@ -7,7 +7,7 @@ import (
 )
 
 type Generator struct {
-	mapper *FieldMapper
+	fm     *FieldMapper
 	sorted bool
 }
 
@@ -16,7 +16,7 @@ func NewGenerator(m *FieldMapper) *Generator {
 }
 
 func (g *Generator) Insert(table string, entity interface{}) (string, []interface{}) {
-	_, cols := g.mapper.Columns(entity)
+	_, cols := g.fm.Columns(entity)
 	if g.sorted {
 		sort.Sort(cols)
 	}
@@ -49,7 +49,7 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 }
 
 func (g *Generator) Update(table string, entity interface{}, names []string) (string, []interface{}) {
-	keys, cols := g.mapper.Columns(entity)
+	keys, cols := g.fm.Columns(entity)
 	if g.sorted {
 		sort.Sort(keys)
 		sort.Sort(cols)

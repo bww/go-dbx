@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx/reflectx"
 )
 
-const defaultTag = "db"
+const Tag = "db"
 
 type FieldMapper struct {
 	*reflectx.Mapper
