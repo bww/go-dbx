@@ -16,7 +16,7 @@ func NewGenerator(m *FieldMapper) *Generator {
 }
 
 func (g *Generator) Insert(table string, entity interface{}) (string, []interface{}) {
-	cols := g.mapper.Columns(entity)
+	_, cols := g.mapper.Columns(entity)
 	if g.sorted {
 		sort.Sort(cols)
 	}
@@ -49,8 +49,9 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 }
 
 func (g *Generator) Update(table string, names []string, entity interface{}) (string, []interface{}) {
-	cols := g.mapper.Columns(entity)
+	keys, cols := g.mapper.Columns(entity)
 	if g.sorted {
+		sort.Sort(keys)
 		sort.Sort(cols)
 	}
 
@@ -62,41 +63,46 @@ func (g *Generator) Update(table string, names []string, entity interface{}) (st
 		}
 	}
 
+	var n, x int
 	b := &strings.Builder{}
 	b.WriteString("UPDATE ")
 	b.WriteString(table)
 	b.WriteString(" SET ")
 
-	var args []interface{}
-	if incl != nil {
-		args = make([]interface{}, 0, len(incl))
-	}
+	args := make([]interface{}, 0, len(incl))
 
+	n = 0
 	for i, e := range cols.Cols {
-		var x int
 		if incl != nil {
 			if _, ok := incl[e]; !ok {
 				continue
 			}
-			x = len(args)
-		} else {
-			x = i
 		}
-		if x > 0 {
+		if n > 0 {
 			b.WriteString(", ")
 		}
 		b.WriteString(e)
 		b.WriteString(" = $")
 		b.WriteString(strconv.FormatInt(int64(x+1), 10))
-		if args != nil {
-			args = append(args, cols.Vals[i])
+		args = append(args, cols.Vals[i])
+		n++
+		x++
+	}
+
+	b.WriteString(" WHERE ")
+
+	n = 0
+	for i, e := range keys.Cols {
+		if n > 0 {
+			b.WriteString(" AND ")
 		}
+		b.WriteString(e)
+		b.WriteString(" = $")
+		b.WriteString(strconv.FormatInt(int64(x+1), 10))
+		args = append(args, keys.Vals[i])
+		x++
+		n++
 	}
 
-	b.WriteString(" ")
-
-	if args == nil {
-		args = cols.Vals
-	}
 	return b.String(), args
 }

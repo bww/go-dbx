@@ -11,18 +11,22 @@ func TestFieldMapper(t *testing.T) {
 	m := NewFieldMapper("db")
 	tests := []struct {
 		Entity  interface{}
+		Keys    []string
 		Columns []string
 		Values  []interface{}
 	}{
 		{
 			testEntity{embedEntity{"BBB"}, "AAA"},
+			[]string{"z"},
 			[]string{"y", "z"},
 			[]interface{}{"BBB", "AAA"},
 		},
 	}
 	for _, e := range tests {
-		c := m.Columns(e.Entity)
+		k, c := m.Columns(e.Entity)
+		sort.Sort(k)
 		sort.Sort(c)
+		assert.Equal(t, e.Keys, k.Cols)
 		assert.Equal(t, e.Columns, c.Cols)
 		assert.Equal(t, e.Values, c.Vals)
 	}

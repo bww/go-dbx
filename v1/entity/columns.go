@@ -1,7 +1,6 @@
 package entity
 
 type Columns struct {
-	Keys []string
 	Cols []string
 	Vals []interface{}
 }

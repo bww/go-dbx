@@ -6,5 +6,11 @@ type embedEntity struct {
 
 type testEntity struct {
 	embedEntity
-	A string `db:"z"`
+	A string `db:"z,pk"`
+}
+
+type multiPKEntity struct {
+	embedEntity
+	A string `db:"z,pk"`
+	C string `db:"x,pk"`
 }
