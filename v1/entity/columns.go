@@ -1,5 +1,14 @@
 package entity
 
+import (
+	"reflect"
+)
+
+type Values struct {
+	Cols []string
+	Vals []reflect.Value
+}
+
 type Columns struct {
 	Cols []string
 	Vals []interface{}

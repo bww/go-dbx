@@ -69,7 +69,7 @@ func TestGeneratorUpdate(t *testing.T) {
 	}
 	gen := &Generator{NewFieldMapper("db"), true}
 	for _, e := range tests {
-		sql, args := gen.Update(e.Table, e.Columns, e.Entity)
+		sql, args := gen.Update(e.Table, e.Entity, e.Columns)
 		fmt.Println("-->", sql)
 		assert.Equal(t, e.SQL, sql)
 		assert.Equal(t, e.Args, args)

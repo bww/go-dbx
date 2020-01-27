@@ -48,7 +48,7 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 	return b.String(), cols.Vals
 }
 
-func (g *Generator) Update(table string, names []string, entity interface{}) (string, []interface{}) {
+func (g *Generator) Update(table string, entity interface{}, names []string) (string, []interface{}) {
 	keys, cols := g.mapper.Columns(entity)
 	if g.sorted {
 		sort.Sort(keys)

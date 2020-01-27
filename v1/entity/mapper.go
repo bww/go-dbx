@@ -18,6 +18,25 @@ func NewFieldMapper(tag string) *FieldMapper {
 	}
 }
 
+func (m *FieldMapper) Keys(entity interface{}) *Values {
+	var kcols []string
+	var kvals []reflect.Value
+
+	e := reflect.ValueOf(entity)
+	x := m.TypeMap(e.Type())
+
+	for k, f := range x.Names {
+		if f.Options != nil {
+			if _, ok := f.Options["pk"]; ok {
+				kcols = append(kcols, k)
+				kvals = append(kvals, reflectx.FieldByIndexes(e, f.Index))
+			}
+		}
+	}
+
+	return &Values{kcols, kvals}
+}
+
 func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 	var vcols, kcols []string
 	var vvals, kvals []interface{}
