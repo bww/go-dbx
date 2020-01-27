@@ -18,8 +18,8 @@ func NewFieldMapper(tag string) *FieldMapper {
 	}
 }
 
-func (m *FieldMapper) Columns(entity interface{}) ([]string, []interface{}) {
-	var cols []string
+func (m *FieldMapper) Columns(entity interface{}) *Columns {
+	var keys, cols []string
 	var vals []interface{}
 
 	e := reflect.ValueOf(entity)
@@ -35,11 +35,7 @@ func (m *FieldMapper) Columns(entity interface{}) ([]string, []interface{}) {
 		cols = append(cols, k)
 	}
 
-	return cols, vals
-}
-
-var defaultMapper = NewFieldMapper(defaultTag)
-
-func Columns(entity interface{}) ([]string, []interface{}) {
-	return defaultMapper.Columns(entity)
+	return &Columns{
+		keys, cols, vals,
+	}
 }

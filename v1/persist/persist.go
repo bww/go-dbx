@@ -2,6 +2,7 @@ package persist
 
 import (
 	"github.com/bww/go-dbx/v1"
+	"github.com/bww/go-dbx/v1/entity"
 )
 
 type Persister interface {
@@ -23,4 +24,8 @@ func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
 		}
 	}
 	return p.cxt
+}
+
+func (p *persister) Store(entity interface{}) error {
+	return nil
 }

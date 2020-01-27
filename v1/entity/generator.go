@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -15,9 +16,9 @@ func NewGenerator(m *FieldMapper) *Generator {
 }
 
 func (g *Generator) Insert(table string, entity interface{}) (string, []interface{}) {
-	cols, vals := g.mapper.Columns(entity)
+	cols := g.mapper.Columns(entity)
 	if g.sorted {
-		cols, vals = sortColumnsAndValues(cols, vals)
+		sort.Sort(cols)
 	}
 
 	b := &strings.Builder{}
@@ -25,7 +26,7 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 	b.WriteString(table)
 	b.WriteString(" (")
 
-	for i, e := range cols {
+	for i, e := range cols.Cols {
 		if i > 0 {
 			b.WriteString(", ")
 		}
@@ -34,7 +35,7 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 
 	b.WriteString(") VALUES (")
 
-	for i, _ := range vals {
+	for i, _ := range cols.Vals {
 		if i > 0 {
 			b.WriteString(", ")
 		}
@@ -44,13 +45,13 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 
 	b.WriteString(")")
 
-	return b.String(), vals
+	return b.String(), cols.Vals
 }
 
 func (g *Generator) Update(table string, names []string, entity interface{}) (string, []interface{}) {
-	cols, vals := g.mapper.Columns(entity)
+	cols := g.mapper.Columns(entity)
 	if g.sorted {
-		cols, vals = sortColumnsAndValues(cols, vals)
+		sort.Sort(cols)
 	}
 
 	var incl map[string]struct{}
@@ -71,7 +72,7 @@ func (g *Generator) Update(table string, names []string, entity interface{}) (st
 		args = make([]interface{}, 0, len(incl))
 	}
 
-	for i, e := range cols {
+	for i, e := range cols.Cols {
 		var x int
 		if incl != nil {
 			if _, ok := incl[e]; !ok {
@@ -88,14 +89,14 @@ func (g *Generator) Update(table string, names []string, entity interface{}) (st
 		b.WriteString(" = $")
 		b.WriteString(strconv.FormatInt(int64(x+1), 10))
 		if args != nil {
-			args = append(args, vals[i])
+			args = append(args, cols.Vals[i])
 		}
 	}
 
 	b.WriteString(" ")
 
 	if args == nil {
-		args = vals
+		args = cols.Vals
 	}
 	return b.String(), args
 }

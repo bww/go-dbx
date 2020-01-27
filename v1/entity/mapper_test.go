@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,9 +21,9 @@ func TestFieldMapper(t *testing.T) {
 		},
 	}
 	for _, e := range tests {
-		c, v := m.Columns(e.Entity)
-		c, v = sortColumnsAndValues(c, v)
-		assert.Equal(t, e.Columns, c)
-		assert.Equal(t, e.Values, v)
+		c := m.Columns(e.Entity)
+		sort.Sort(c)
+		assert.Equal(t, e.Columns, c.Cols)
+		assert.Equal(t, e.Values, c.Vals)
 	}
 }
