@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrInvalidField = errors.New("Invalid field")
+	ErrInvalidField    = errors.New("Invalid field")
+	ErrInvalidKeyCount = errors.New("Invalid primary key count")
 )
 
 type Persister interface {
@@ -20,12 +21,13 @@ type persister struct {
 	cxt dbx.Context // default context
 	fm  *entity.FieldMapper
 	gen *entity.Generator
+	ids IdentFunc
 }
 
-func New(cxt dbx.Context) Persister {
+func New(cxt dbx.Context, ids IdentFunc) Persister {
 	fm := entity.NewFieldMapper(entity.Tag)
 	gen := entity.NewGenerator(fm)
-	return &persister{cxt: cxt, fm: fm, gen: gen}
+	return &persister{cxt: cxt, fm: fm, gen: gen, ids: ids}
 }
 
 func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
@@ -57,6 +59,13 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 		sql, args = p.gen.Insert(table, entity)
 	} else {
 		sql, args = p.gen.Update(table, entity, cols)
+	}
+
+	if insert { // generate primary key
+		if len(keys.Vals) != 1 {
+			return ErrInvalidKeyCount
+		}
+		keys.Vals[0].Set(p.ids())
 	}
 
 	cxt = p.Context(cxt)

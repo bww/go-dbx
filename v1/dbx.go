@@ -21,7 +21,7 @@ type DB struct {
 	debug bool
 }
 
-func Connect(dsn string, opts ...Option) (*DB, error) {
+func New(dsn string, opts ...Option) (*DB, error) {
 	u, err := url.Parse(dsn)
 	if err != nil {
 		return nil, err
