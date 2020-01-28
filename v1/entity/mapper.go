@@ -1,17 +1,13 @@
 package entity
 
 import (
-	"errors"
 	"reflect"
 
+	"github.com/bww/go-dbx/v1"
 	"github.com/jmoiron/sqlx/reflectx"
 )
 
 const Tag = "db"
-
-var (
-	ErrNotAPointer = errors.New("Not a pointer")
-)
 
 type FieldMapper struct {
 	*reflectx.Mapper
@@ -31,7 +27,7 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 	x := m.TypeMap(e.Type())
 
 	if e.Kind() != reflect.Ptr {
-		return nil, ErrNotAPointer
+		return nil, dbx.ErrNotAPointer
 	}
 
 	for k, f := range x.Names {

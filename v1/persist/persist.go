@@ -1,15 +1,8 @@
 package persist
 
 import (
-	"errors"
-
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
-)
-
-var (
-	ErrInvalidField    = errors.New("Invalid field")
-	ErrInvalidKeyCount = errors.New("Invalid primary key count")
 )
 
 type Persister interface {
@@ -39,6 +32,9 @@ func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
 	return p.cxt
 }
 
+func (p *persister) Fetch(table string, entity interface{}, id interface{}, cxt dbx.Context) error {
+}
+
 func (p *persister) Store(table string, entity interface{}, cols []string, cxt dbx.Context) error {
 	var insert bool
 
@@ -49,7 +45,7 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 
 	for _, e := range keys.Vals {
 		if !e.IsValid() {
-			return ErrInvalidField
+			return dbx.ErrInvalidField
 		}
 		if e.IsZero() {
 			insert = true
@@ -59,7 +55,7 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 
 	if insert {
 		if len(keys.Vals) != 1 {
-			return ErrInvalidKeyCount
+			return dbx.ErrInvalidKeyCount
 		}
 		keys.Vals[0].Set(p.ids()) // generate primary key
 	}

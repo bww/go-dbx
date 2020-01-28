@@ -15,6 +15,47 @@ func NewGenerator(m *FieldMapper) *Generator {
 	return &Generator{m, false}
 }
 
+func (g *Generator) Select(table string, entity interface{}, keys *Columns) (string, []interface{}) {
+	_, cols := g.fm.Columns(entity)
+	if g.sorted {
+		sort.Sort(cols)
+		sort.Sort(keys)
+	}
+
+	var n, x int
+	args := make([]interface{}, 0, len(keys.Vals))
+
+	b := &strings.Builder{}
+	b.WriteString("SELECT ")
+
+	n = 0
+	for i, e := range cols.Cols {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(e)
+	}
+
+	b.WriteString(" FROM ")
+	b.WriteString(table)
+	b.WriteString(" WHERE ")
+
+	n = 0
+	for i, e := range keys.Cols {
+		if n > 0 {
+			b.WriteString(" AND ")
+		}
+		b.WriteString(e)
+		b.WriteString(" = $")
+		b.WriteString(strconv.FormatInt(int64(x+1), 10))
+		args = append(args, keys.Vals[i])
+		x++
+		n++
+	}
+
+	return b.String(), args
+}
+
 func (g *Generator) Insert(table string, entity interface{}) (string, []interface{}) {
 	_, cols := g.fm.Columns(entity)
 	if g.sorted {

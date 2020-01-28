@@ -75,3 +75,41 @@ func TestGeneratorUpdate(t *testing.T) {
 		assert.Equal(t, e.Args, args)
 	}
 }
+
+func TestGeneratorSelect(t *testing.T) {
+	tests := []struct {
+		Entity interface{}
+		Table  string
+		Keys   *Columns
+		SQL    string
+		Args   []interface{}
+	}{
+		{
+			testEntity{},
+			"some_table",
+			&Columns{
+				Cols: []string{"z"},
+				Vals: []interface{}{"AAA"},
+			},
+			"SELECT y, z FROM some_table WHERE z = $1",
+			[]interface{}{"AAA"},
+		},
+		{
+			multiPKEntity{},
+			"some_table",
+			&Columns{
+				Cols: []string{"z", "x"},
+				Vals: []interface{}{"AAA", "CCC"},
+			},
+			"SELECT x, y, z FROM some_table WHERE x = $1 AND z = $2",
+			[]interface{}{"CCC", "AAA"},
+		},
+	}
+	gen := &Generator{NewFieldMapper("db"), true}
+	for _, e := range tests {
+		sql, args := gen.Select(e.Table, e.Entity, e.Keys)
+		fmt.Println("-->", sql)
+		assert.Equal(t, e.SQL, sql)
+		assert.Equal(t, e.Args, args)
+	}
+}
