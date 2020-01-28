@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/bww/go-util/debug"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
@@ -32,7 +33,7 @@ func New(dsn string, opts ...Option) (*DB, error) {
 		return nil, err
 	}
 
-	d := &DB{DB: x}
+	d := &DB{DB: x, debug: debug.DEBUG}
 
 	for _, e := range opts {
 		d, err = e(d)

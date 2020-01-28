@@ -1,12 +1,17 @@
 package entity
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/jmoiron/sqlx/reflectx"
 )
 
 const Tag = "db"
+
+var (
+	ErrNotAPointer = errors.New("Not a pointer")
+)
 
 type FieldMapper struct {
 	*reflectx.Mapper
@@ -18,12 +23,16 @@ func NewFieldMapper(tag string) *FieldMapper {
 	}
 }
 
-func (m *FieldMapper) Keys(entity interface{}) *Values {
+func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 	var kcols []string
 	var kvals []reflect.Value
 
 	e := reflect.ValueOf(entity)
 	x := m.TypeMap(e.Type())
+
+	if e.Kind() != reflect.Ptr {
+		return nil, ErrNotAPointer
+	}
 
 	for k, f := range x.Names {
 		if f.Options != nil {
@@ -34,7 +43,7 @@ func (m *FieldMapper) Keys(entity interface{}) *Values {
 		}
 	}
 
-	return &Values{kcols, kvals}
+	return &Values{kcols, kvals}, nil
 }
 
 func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
@@ -47,8 +56,8 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 	for k, f := range x.Names {
 		var x interface{}
 
-		v := reflectx.FieldByIndexes(e, f.Index)
-		if v.IsValid() && !v.IsZero() {
+		v := reflectx.FieldByIndexesReadOnly(e, f.Index)
+		if v.IsValid() && v.CanInterface() {
 			x = v.Interface()
 		} else {
 			x = f.Zero.Interface()

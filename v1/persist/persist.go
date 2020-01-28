@@ -5,6 +5,7 @@ import (
 
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -42,7 +43,11 @@ func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
 func (p *persister) Store(table string, entity interface{}, cols []string, cxt dbx.Context) error {
 	var insert bool
 
-	keys := p.fm.Keys(entity)
+	keys, err := p.fm.Keys(entity)
+	if err != nil {
+		return err
+	}
+
 	for _, e := range keys.Vals {
 		if !e.IsValid() {
 			return ErrInvalidField
@@ -53,6 +58,13 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 		}
 	}
 
+	if insert {
+		if len(keys.Vals) != 1 {
+			return ErrInvalidKeyCount
+		}
+		keys.Vals[0].Set(p.ids()) // generate primary key
+	}
+
 	var sql string
 	var args []interface{}
 	if insert {
@@ -61,15 +73,8 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 		sql, args = p.gen.Update(table, entity, cols)
 	}
 
-	if insert { // generate primary key
-		if len(keys.Vals) != 1 {
-			return ErrInvalidKeyCount
-		}
-		keys.Vals[0].Set(p.ids())
-	}
-
 	cxt = p.Context(cxt)
-	_, err := cxt.Exec(sql, args...)
+	_, err = cxt.Exec(sql, args...)
 	if err != nil {
 		return err
 	}

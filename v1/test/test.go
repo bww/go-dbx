@@ -55,9 +55,9 @@ func DB() *dbx.DB {
 }
 
 func setup(conf *Config) error {
-	debug.DEBUG = istrue(os.Getenv("DBX_DEBUG"))
-	debug.VERBOSE = istrue(os.Getenv("DBX_VERBOSE"))
-	debug.TRACE = istrue(os.Getenv("DBX_TRACE"))
+	debug.DEBUG = debug.DEBUG || istrue(os.Getenv("DBX_DEBUG"))
+	debug.VERBOSE = debug.VERBOSE || istrue(os.Getenv("DBX_VERBOSE"))
+	debug.TRACE = debug.TRACE || istrue(os.Getenv("DBX_TRACE"))
 
 	err := createDatabase(dburl(initDB), conf.Name)
 	if err != nil {

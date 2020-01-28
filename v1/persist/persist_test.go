@@ -1,50 +1,50 @@
 package persist
 
 import (
-	// "fmt"
+	"fmt"
 	"os"
 	"testing"
 
-	// "github.com/bww/go-dbx/v1/entity"
+	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
 	"github.com/bww/go-util/urls"
-	// "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
+const testTable = "dbx_v1_persist_test"
+
 type embedEntity struct {
-	B string `db:"y"`
+	B string `db:"b"`
 }
 
 type testEntity struct {
 	embedEntity
-	A string `db:"z,pk"`
+	A string `db:"a,pk"`
 }
 
 func TestMain(m *testing.M) {
-	test.Init("dbx_v1_persist_test", test.WithMigrations(urls.File(env.Etc("db"))))
+	test.Init(testTable, test.WithMigrations(urls.File(env.Etc("migrations"))))
 	os.Exit(m.Run())
 }
 
 func TestPersist(t *testing.T) {
-	// tests := []struct {
-	// 	Entity interface{}
-	// 	Table  string
-	// 	SQL    string
-	// 	Args   []interface{}
-	// }{
-	// 	{
-	// 		testEntity{embedEntity{"BBB"}, "AAA"},
-	// 		"some_table",
-	// 		"INSERT INTO some_table (y, z) VALUES ($1, $2)",
-	// 		[]interface{}{"BBB", "AAA"},
-	// 	},
-	// }
-	// gen := &Generator{NewFieldMapper("db"), true}
-	// for _, e := range tests {
-	// 	sql, args := gen.Insert(e.Table, e.Entity)
-	// 	fmt.Println("-->", sql)
-	// 	assert.Equal(t, e.SQL, sql)
-	// 	assert.Equal(t, e.Args, args)
-	// }
+	var err error
+
+	gen := entity.NewGenerator(entity.NewFieldMapper("db"))
+	pst := New(test.DB(), Random)
+
+	_ = gen
+
+	ea := &testEntity{
+		embedEntity: embedEntity{
+			B: "This is the value of B",
+		},
+	}
+
+	err = pst.Store(testTable, ea, nil, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Len(t, ea.A, 32)
+	}
+
 }
