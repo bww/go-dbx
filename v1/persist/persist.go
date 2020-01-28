@@ -5,7 +5,6 @@ import (
 
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (

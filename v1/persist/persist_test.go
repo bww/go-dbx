@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
 	"github.com/bww/go-util/urls"
@@ -14,13 +13,14 @@ import (
 
 const testTable = "dbx_v1_persist_test"
 
-type embedEntity struct {
+type DontUseThisExportedEntity struct {
 	B string `db:"b"`
 }
 
 type testEntity struct {
-	embedEntity
+	*DontUseThisExportedEntity
 	A string `db:"a,pk"`
+	C int    `db:"c"`
 }
 
 func TestMain(m *testing.M) {
@@ -29,22 +29,37 @@ func TestMain(m *testing.M) {
 }
 
 func TestPersist(t *testing.T) {
+	db := test.DB()
+	pst := New(db, Random)
 	var err error
 
-	gen := entity.NewGenerator(entity.NewFieldMapper("db"))
-	pst := New(test.DB(), Random)
-
-	_ = gen
-
 	ea := &testEntity{
-		embedEntity: embedEntity{
+		DontUseThisExportedEntity: &DontUseThisExportedEntity{
 			B: "This is the value of B",
 		},
+		C: 999,
 	}
 
 	err = pst.Store(testTable, ea, nil, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, ea.A, 32)
+	}
+
+	var ca, cb string
+	var cc int
+	err = db.QueryRow(`SELECT a, b, c FROM `+testTable+` WHERE a = $1`, ea.A).Scan(&ca, &cb, &cc)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, ea.A, ca)
+		assert.Equal(t, ea.B, cb)
+		assert.Equal(t, ea.C, cc)
+	}
+
+	var eb testEntity
+	err = db.QueryRowx(`SELECT a, b, c FROM `+testTable+` WHERE a = $1`, ea.A).StructScan(&eb)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, ea.A, eb.A)
+		assert.Equal(t, ea.B, eb.B)
+		assert.Equal(t, ea.C, eb.C)
 	}
 
 }
