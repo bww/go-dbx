@@ -21,7 +21,7 @@ func TestGeneratorInsert(t *testing.T) {
 			[]interface{}{"BBB", "AAA"},
 		},
 	}
-	gen := &Generator{NewFieldMapper("db"), true}
+	gen := &Generator{NewFieldMapper(), true}
 	for _, e := range tests {
 		sql, args := gen.Insert(e.Table, e.Entity)
 		fmt.Println("-->", sql)
@@ -67,7 +67,7 @@ func TestGeneratorUpdate(t *testing.T) {
 			[]interface{}{"AAA", "CCC", "AAA"},
 		},
 	}
-	gen := &Generator{NewFieldMapper("db"), true}
+	gen := &Generator{NewFieldMapper(), true}
 	for _, e := range tests {
 		sql, args := gen.Update(e.Table, e.Entity, e.Columns)
 		fmt.Println("-->", sql)
@@ -105,7 +105,7 @@ func TestGeneratorSelect(t *testing.T) {
 			[]interface{}{"CCC", "AAA"},
 		},
 	}
-	gen := &Generator{NewFieldMapper("db"), true}
+	gen := &Generator{NewFieldMapper(), true}
 	for _, e := range tests {
 		sql, args := gen.Select(e.Table, e.Entity, e.Keys)
 		fmt.Println("-->", sql)

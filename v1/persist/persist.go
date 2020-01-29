@@ -18,10 +18,13 @@ type persister struct {
 	ids IdentFunc
 }
 
-func New(cxt dbx.Context, ids IdentFunc) Persister {
-	fm := entity.NewFieldMapper(entity.Tag)
-	gen := entity.NewGenerator(fm)
-	return &persister{cxt: cxt, fm: fm, gen: gen, ids: ids}
+func New(cxt dbx.Context, fm *entity.FieldMapper, ids IdentFunc) Persister {
+	return &persister{
+		cxt: cxt,
+		fm:  fm,
+		gen: entity.NewGenerator(fm),
+		ids: ids,
+	}
 }
 
 func (p *persister) Context(cxts ...dbx.Context) dbx.Context {

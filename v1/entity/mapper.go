@@ -13,9 +13,9 @@ type FieldMapper struct {
 	*reflectx.Mapper
 }
 
-func NewFieldMapper(tag string) *FieldMapper {
+func NewFieldMapper() *FieldMapper {
 	return &FieldMapper{
-		Mapper: reflectx.NewMapper(tag),
+		Mapper: reflectx.NewMapper(Tag),
 	}
 }
 

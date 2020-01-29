@@ -8,7 +8,7 @@ import (
 )
 
 func TestFieldMapper(t *testing.T) {
-	m := NewFieldMapper("db")
+	m := NewFieldMapper()
 	tests := []struct {
 		Entity  interface{}
 		Keys    []string
