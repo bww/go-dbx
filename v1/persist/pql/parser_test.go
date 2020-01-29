@@ -70,12 +70,47 @@ func TestParseLiteral(t *testing.T) {
 		},
 	}
 	for _, e := range tests {
+		fmt.Println(">>>", e.Text)
 		n, err := parseLiteral(NewScanner(e.Text))
 		if e.Error != nil {
-			fmt.Println(">>>", err)
+			fmt.Println("-->", err)
 			assert.Equal(t, e.Error, err, e.Text)
 		} else if assert.Nil(t, err, fmt.Sprint(err)) {
-			fmt.Printf(">>> [%s]\n", n.Span().Excerpt())
+			fmt.Printf("--> [%s]\n", n.Span().Excerpt())
+			assert.Equal(t, e.Expect, n)
+		}
+	}
+}
+
+func TestParseExpr(t *testing.T) {
+	tests := []struct {
+		Text   string
+		Expect Node
+		Error  error
+	}{
+		{
+			`{p}`,
+			exprListNode{
+				node: newNode(`{p}`, 0, len(`{p}`)),
+				sub: []Node{
+					exprLiteralNode{
+						node:   newNode(`{p}`, 1, 1),
+						prefix: "",
+						name:   "p",
+					},
+				},
+			},
+			nil,
+		},
+	}
+	for _, e := range tests {
+		fmt.Println(">>>", e.Text)
+		n, err := parseExprList(NewScanner(e.Text))
+		if e.Error != nil {
+			fmt.Println("-->", err)
+			assert.Equal(t, e.Error, err, e.Text)
+		} else if assert.Nil(t, err, fmt.Sprint(err)) {
+			fmt.Printf("--> [%s]\n", n.Span().Excerpt())
 			assert.Equal(t, e.Expect, n)
 		}
 	}

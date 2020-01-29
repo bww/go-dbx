@@ -5,8 +5,11 @@ import (
 )
 
 var (
-	EOF              = errors.New("EOF")
-	ErrInvalidEscape = errors.New("Invalid escape sequence")
+	EOF                = errors.New("EOF")
+	ErrInvalidEscape   = errors.New("Invalid escape sequence")
+	ErrInvalidIdent    = errors.New("Invalid identifier")
+	ErrUnexpectedToken = errors.New("Unexpected token")
+	ErrUnexpectedEOF   = errors.New("Unexpected end-of-file")
 )
 
 type Error struct {
