@@ -57,6 +57,26 @@ func (p *persister) Fetch(table string, ent interface{}, id interface{}, cxt dbx
 	return nil
 }
 
+func (p *persister) Select(table string, ent interface{}, cxt dbx.Context) error {
+	keys, _ := p.fm.Columns(ent)
+
+	if len(keys.Cols) != 1 {
+		return dbx.ErrInvalidKeyCount
+	}
+
+	sql, args := p.gen.Select(table, ent, &entity.Columns{
+		Cols: keys.Cols,
+		Vals: []interface{}{id},
+	})
+
+	err := p.Context(cxt).QueryRowx(sql, args...).StructScan(ent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *persister) Store(table string, ent interface{}, cols []string, cxt dbx.Context) error {
 	var insert bool
 
