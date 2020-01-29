@@ -14,6 +14,26 @@ func TestParseLiteral(t *testing.T) {
 		Error  error
 	}{
 		{
+			"",
+			literalNode{
+				node: node{
+					span: NewSpan("", 0, 0),
+				},
+				text: "",
+			},
+			nil,
+		},
+		{
+			"{___",
+			literalNode{
+				node: node{
+					span: NewSpan("{___", 0, 0),
+				},
+				text: "",
+			},
+			nil,
+		},
+		{
 			"This is the text, ok.",
 			literalNode{
 				node: node{

@@ -35,10 +35,6 @@ func parseNode(s *Scanner) (Node, error) {
 	return nil, EOF
 }
 
-func parseMeta(s *Scanner) (Node, error) {
-	return nil, nil
-}
-
 func parseLiteral(s *Scanner) (Node, error) {
 	var err error
 	b := &strings.Builder{}
@@ -76,4 +72,8 @@ func parseEscape(s *Scanner) (rune, error) {
 	default:
 		return eof, newErr(ErrInvalidEscape, NewSpan(s.text, a, s.index-a))
 	}
+}
+
+func parseMeta(s *Scanner) (Node, error) {
+	return nil, nil
 }
