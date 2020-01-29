@@ -52,7 +52,7 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 	for k, f := range x.Names {
 		var x interface{}
 
-		v := reflectx.FieldByIndexesReadOnly(e, f.Index)
+		v := reflectx.FieldByIndexes(e, f.Index)
 		if v.IsValid() && v.CanInterface() {
 			x = v.Interface()
 		} else {

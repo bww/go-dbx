@@ -62,4 +62,12 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, ea.C, eb.C)
 	}
 
+	var ec testEntity
+	err = pst.Fetch(testTable, &ec, ea.A, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, ea.A, ec.A)
+		assert.Equal(t, ea.B, ec.B)
+		assert.Equal(t, ea.C, ec.C)
+	}
+
 }

@@ -8,6 +8,7 @@ import (
 type Persister interface {
 	Context(...dbx.Context) dbx.Context
 	Store(string, interface{}, []string, dbx.Context) error
+	Fetch(string, interface{}, interface{}, dbx.Context) error
 }
 
 type persister struct {
@@ -32,13 +33,30 @@ func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
 	return p.cxt
 }
 
-func (p *persister) Fetch(table string, entity interface{}, id interface{}, cxt dbx.Context) error {
+func (p *persister) Fetch(table string, ent interface{}, id interface{}, cxt dbx.Context) error {
+	keys, _ := p.fm.Columns(ent)
+
+	if len(keys.Cols) != 1 {
+		return dbx.ErrInvalidKeyCount
+	}
+
+	sql, args := p.gen.Select(table, ent, &entity.Columns{
+		Cols: keys.Cols,
+		Vals: []interface{}{id},
+	})
+
+	err := p.Context(cxt).QueryRowx(sql, args...).StructScan(ent)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (p *persister) Store(table string, entity interface{}, cols []string, cxt dbx.Context) error {
+func (p *persister) Store(table string, ent interface{}, cols []string, cxt dbx.Context) error {
 	var insert bool
 
-	keys, err := p.fm.Keys(entity)
+	keys, err := p.fm.Keys(ent)
 	if err != nil {
 		return err
 	}
@@ -63,13 +81,12 @@ func (p *persister) Store(table string, entity interface{}, cols []string, cxt d
 	var sql string
 	var args []interface{}
 	if insert {
-		sql, args = p.gen.Insert(table, entity)
+		sql, args = p.gen.Insert(table, ent)
 	} else {
-		sql, args = p.gen.Update(table, entity, cols)
+		sql, args = p.gen.Update(table, ent, cols)
 	}
 
-	cxt = p.Context(cxt)
-	_, err = cxt.Exec(sql, args...)
+	_, err = p.Context(cxt).Exec(sql, args...)
 	if err != nil {
 		return err
 	}
