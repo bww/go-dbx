@@ -2,12 +2,25 @@ package entity
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/bww/go-dbx/v1"
 	"github.com/jmoiron/sqlx/reflectx"
 )
 
 const Tag = "db"
+
+var (
+	initOnce      sync.Once
+	defaultMapper *FieldMapper
+)
+
+func DefaultFieldMapper() *FieldMapper {
+	initOnce.Do(func() {
+		defaultMapper = NewFieldMapper()
+	})
+	return defaultMapper
+}
 
 type FieldMapper struct {
 	*reflectx.Mapper

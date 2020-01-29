@@ -14,8 +14,16 @@ func ULID() reflect.Value {
 	return reflect.ValueOf(ulid.New())
 }
 
+func ULIDString() reflect.Value {
+	return reflect.ValueOf(ulid.New().String())
+}
+
 func UUID() reflect.Value {
 	return reflect.ValueOf(uuid.New())
+}
+
+func UUIDString() reflect.Value {
+	return reflect.ValueOf(uuid.New().String())
 }
 
 func AlphaNumeric(n int) Generator {
