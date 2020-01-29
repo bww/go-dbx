@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bww/go-dbx/v1/entity"
+	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
 	"github.com/bww/go-util/urls"
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func TestPersist(t *testing.T) {
 	db := test.DB()
-	pst := New(db, entity.NewFieldMapper(), Random)
+	pst := New(db, entity.NewFieldMapper(), ident.AlphaNumeric(32))
 	var err error
 
 	ea := &testEntity{

@@ -3,6 +3,7 @@ package persist
 import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
+	"github.com/bww/go-dbx/v1/persist/ident"
 )
 
 type Persister interface {
@@ -15,10 +16,10 @@ type persister struct {
 	cxt dbx.Context // default context
 	fm  *entity.FieldMapper
 	gen *entity.Generator
-	ids IdentFunc
+	ids ident.Generator
 }
 
-func New(cxt dbx.Context, fm *entity.FieldMapper, ids IdentFunc) Persister {
+func New(cxt dbx.Context, fm *entity.FieldMapper, ids ident.Generator) Persister {
 	return &persister{
 		cxt: cxt,
 		fm:  fm,
