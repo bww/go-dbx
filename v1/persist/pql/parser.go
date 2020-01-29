@@ -55,9 +55,7 @@ func parseLiteral(s *Scanner) (Node, error) {
 		b.WriteRune(c)
 	}
 	return literalNode{
-		node: node{
-			span: NewSpan(s.text, a, s.index-a),
-		},
+		node: newNode(s.text, a, s.index-a),
 		text: b.String(),
 	}, nil
 }

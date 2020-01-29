@@ -26,9 +26,7 @@ func TestParseLiteral(t *testing.T) {
 		{
 			"{___",
 			literalNode{
-				node: node{
-					span: NewSpan("{___", 0, 0),
-				},
+				node: newNode("{___", 0, 0),
 				text: "",
 			},
 			nil,
@@ -36,9 +34,7 @@ func TestParseLiteral(t *testing.T) {
 		{
 			"This is the text, ok.",
 			literalNode{
-				node: node{
-					span: NewSpan("This is the text, ok.", 0, len("This is the text, ok.")),
-				},
+				node: newNode("This is the text, ok.", 0, len("This is the text, ok.")),
 				text: "This is the text, ok.",
 			},
 			nil,
@@ -46,9 +42,7 @@ func TestParseLiteral(t *testing.T) {
 		{
 			"This is the { text, ok.",
 			literalNode{
-				node: node{
-					span: NewSpan("This is the { text, ok.", 0, 12),
-				},
+				node: newNode("This is the { text, ok.", 0, 12),
 				text: "This is the ",
 			},
 			nil,
@@ -56,9 +50,7 @@ func TestParseLiteral(t *testing.T) {
 		{
 			`This is the \{ text, ok.`,
 			literalNode{
-				node: node{
-					span: NewSpan(`This is the \{ text, ok.`, 0, len(`This is the \{ text, ok.`)),
-				},
+				node: newNode(`This is the \{ text, ok.`, 0, len(`This is the \{ text, ok.`)),
 				text: `This is the { text, ok.`,
 			},
 			nil,
@@ -66,9 +58,7 @@ func TestParseLiteral(t *testing.T) {
 		{
 			`This is the \\ text, ok.`,
 			literalNode{
-				node: node{
-					span: NewSpan(`This is the \\ text, ok.`, 0, len(`This is the \\ text, ok.`)),
-				},
+				node: newNode(`This is the \\ text, ok.`, 0, len(`This is the \\ text, ok.`)),
 				text: `This is the \ text, ok.`,
 			},
 			nil,
