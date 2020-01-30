@@ -150,6 +150,32 @@ func TestParseExpr(t *testing.T) {
 			},
 			"p, p.A, p.B",
 		},
+		{
+			`{ p, p.*, x.* }`,
+			exprListNode{
+				node: newNode(`{ p, p.*, x.* }`, 1, 13),
+				sub: []Node{
+					exprLiteralNode{
+						node:   newNode(`{ p, p.*, x.* }`, 2, 1),
+						prefix: "",
+						name:   "p",
+					},
+					exprMatchNode{
+						node:   newNode(`{ p, p.*, x.* }`, 5, 3),
+						prefix: "p",
+					},
+					exprMatchNode{
+						node:   newNode(`{ p, p.*, x.* }`, 10, 4),
+						prefix: "x",
+					},
+				},
+			},
+			nil,
+			Context{
+				Columns: []string{"A", "B"},
+			},
+			"p, p.A, p.B, x.A, x.B",
+		},
 	}
 	for _, e := range tests {
 		fmt.Println(">>>", e.Text)
