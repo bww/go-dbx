@@ -20,7 +20,7 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("%v [%d+%d] %v", e.error.Error(), e.span.offset, e.span.length, e.span.Excerpt())
+	return fmt.Sprintf("%v %s", e.error.Error(), e.span.Describe())
 }
 
 func newErr(c error, s Span) *Error {

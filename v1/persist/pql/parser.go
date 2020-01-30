@@ -21,14 +21,18 @@ func Parse(t string) (*Program, error) {
 			n = append(n, e)
 		}
 	}
-	return &Program{sub: n}, nil
+	return &Program{
+		node: newNode(t, 0, len(t)),
+		sub:  n,
+	}, nil
 }
 
 func parseNode(s *Scanner) (Node, error) {
+outer:
 	for {
 		switch c := s.Peek(); c {
 		case eof:
-			break
+			break outer
 		case '{':
 			return parseMeta(s)
 		default:

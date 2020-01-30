@@ -196,3 +196,94 @@ func TestParseExpr(t *testing.T) {
 		}
 	}
 }
+
+func TestParseProgram(t *testing.T) {
+	tests := []struct {
+		Text    string
+		Expect  *Program
+		Error   error
+		Context Context
+		Output  string
+	}{
+		{
+			`Hello {p} after.`,
+			&Program{
+				node: newNode(`Hello {p} after.`, 0, len(`Hello {p} after.`)),
+				sub: []Node{
+					literalNode{
+						node: newNode(`Hello {p} after.`, 0, 6),
+						text: "Hello ",
+					},
+					exprListNode{
+						node: newNode(`Hello {p} after.`, 7, 1),
+						sub: []Node{
+							exprLiteralNode{
+								node:   newNode(`Hello {p} after.`, 7, 1),
+								prefix: "",
+								name:   "p",
+							},
+						},
+					},
+					literalNode{
+						node: newNode(`Hello {p} after.`, 9, 7),
+						text: " after.",
+					},
+				},
+			},
+			nil,
+			Context{},
+			`Hello p after.`,
+		},
+		{
+			`Hello {z, p.*} after.`,
+			&Program{
+				node: newNode(`Hello {z, p.*} after.`, 0, len(`Hello {z, p.*} after.`)),
+				sub: []Node{
+					literalNode{
+						node: newNode(`Hello {z, p.*} after.`, 0, 6),
+						text: "Hello ",
+					},
+					exprListNode{
+						node: newNode(`Hello {z, p.*} after.`, 7, 6),
+						sub: []Node{
+							exprLiteralNode{
+								node:   newNode(`Hello {z, p.*} after.`, 7, 1),
+								prefix: "",
+								name:   "z",
+							},
+							exprMatchNode{
+								node:   newNode(`Hello {z, p.*} after.`, 10, 3),
+								prefix: "p",
+							},
+						},
+					},
+					literalNode{
+						node: newNode(`Hello {z, p.*} after.`, 14, 7),
+						text: " after.",
+					},
+				},
+			},
+			nil,
+			Context{
+				Columns: []string{"A", "B", "C"},
+			},
+			`Hello z, p.A, p.B, p.C after.`,
+		},
+	}
+	for _, e := range tests {
+		fmt.Println(">>>", e.Text)
+		p, err := Parse(e.Text)
+		if e.Error != nil {
+			fmt.Println("-->", err)
+			assert.Equal(t, e.Error, err, e.Text)
+		} else if assert.Nil(t, err, fmt.Sprint(err)) {
+			fmt.Println("-->", p.Span().Describe())
+			assert.Equal(t, e.Expect, p)
+			r, err := p.Text(e.Context)
+			if assert.Nil(t, err, fmt.Sprint(err)) {
+				fmt.Println("-->", r)
+				assert.Equal(t, e.Output, r)
+			}
+		}
+	}
+}

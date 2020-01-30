@@ -32,6 +32,7 @@ func (n node) Span() Span {
 }
 
 type Program struct {
+	node
 	sub []Node
 }
 
