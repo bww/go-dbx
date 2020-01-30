@@ -2,6 +2,7 @@ package pql
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -83,9 +84,11 @@ func TestParseLiteral(t *testing.T) {
 
 func TestParseExpr(t *testing.T) {
 	tests := []struct {
-		Text   string
-		Expect Node
-		Error  error
+		Text    string
+		Expect  Node
+		Error   error
+		Context Context
+		Output  string
 	}{
 		{
 			`{p}`,
@@ -100,6 +103,8 @@ func TestParseExpr(t *testing.T) {
 				},
 			},
 			nil,
+			Context{},
+			"p",
 		},
 		{
 			`{p, p.*}`,
@@ -118,6 +123,10 @@ func TestParseExpr(t *testing.T) {
 				},
 			},
 			nil,
+			Context{
+				Columns: []string{"A", "B"},
+			},
+			"p, p.A, p.B",
 		},
 		{
 			`{ p  ,  p . * }`,
@@ -136,6 +145,10 @@ func TestParseExpr(t *testing.T) {
 				},
 			},
 			nil,
+			Context{
+				Columns: []string{"A", "B"},
+			},
+			"p, p.A, p.B",
 		},
 	}
 	for _, e := range tests {
@@ -146,8 +159,14 @@ func TestParseExpr(t *testing.T) {
 			assert.Equal(t, e.Error, err, e.Text)
 		} else if assert.Nil(t, err, fmt.Sprint(err)) {
 			fmt.Println("-->", n.Span().Describe())
-			fmt.Printf("--> [%s]\n", n.Span().Excerpt())
 			assert.Equal(t, e.Expect, n)
+			w := &strings.Builder{}
+			err := n.Exec(w, e.Context)
+			if assert.Nil(t, err, fmt.Sprint(err)) {
+				r := w.String()
+				fmt.Println("-->", r)
+				assert.Equal(t, e.Output, r)
+			}
 		}
 	}
 }
