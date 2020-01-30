@@ -1,6 +1,7 @@
 package pql
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -16,7 +17,11 @@ func NewSpan(t string, o, l int) Span {
 
 func (s Span) Excerpt() string {
 	max := len(s.text)
-	return s.text[int(imax(0, imin(max, s.offset))):int(imin(max, s.offset+s.length))]
+	return s.text[imax(0, imin(max, s.offset)):imin(max, s.offset+s.length)]
+}
+
+func (s Span) Describe() string {
+	return fmt.Sprintf("[%d+%d] %s", s.offset, s.length, strconv.Quote(s.Excerpt()))
 }
 
 func (s Span) String() string {
@@ -51,7 +56,7 @@ func imin(a, b int) int {
 }
 
 func imax(a, b int) int {
-	if a < b {
+	if a > b {
 		return a
 	} else {
 		return b

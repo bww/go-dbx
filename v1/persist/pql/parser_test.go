@@ -70,7 +70,6 @@ func TestParseLiteral(t *testing.T) {
 		},
 	}
 	for _, e := range tests {
-		fmt.Println(">>>", e.Text)
 		n, err := parseLiteral(NewScanner(e.Text))
 		if e.Error != nil {
 			fmt.Println("-->", err)
@@ -91,7 +90,7 @@ func TestParseExpr(t *testing.T) {
 		{
 			`{p}`,
 			exprListNode{
-				node: newNode(`{p}`, 0, len(`{p}`)),
+				node: newNode(`{p}`, 1, 1),
 				sub: []Node{
 					exprLiteralNode{
 						node:   newNode(`{p}`, 1, 1),
@@ -105,11 +104,12 @@ func TestParseExpr(t *testing.T) {
 	}
 	for _, e := range tests {
 		fmt.Println(">>>", e.Text)
-		n, err := parseExprList(NewScanner(e.Text))
+		n, err := parseMeta(NewScanner(e.Text))
 		if e.Error != nil {
 			fmt.Println("-->", err)
 			assert.Equal(t, e.Error, err, e.Text)
 		} else if assert.Nil(t, err, fmt.Sprint(err)) {
+			fmt.Println("-->", n.Span().Describe())
 			fmt.Printf("--> [%s]\n", n.Span().Excerpt())
 			assert.Equal(t, e.Expect, n)
 		}

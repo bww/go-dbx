@@ -5,6 +5,8 @@ import (
 	"unicode"
 )
 
+const wildcard = "*"
+
 func Parse(t string) (*Program, error) {
 	s := NewScanner(t)
 	n := make([]Node, 0)
@@ -24,13 +26,11 @@ func Parse(t string) (*Program, error) {
 
 func parseNode(s *Scanner) (Node, error) {
 	for {
-		c := s.Next()
-		if c == eof {
+		switch c := s.Peek(); c {
+		case eof:
 			break
-		}
-		switch c {
 		case '{':
-			return parseExprList(s)
+			return parseMeta(s)
 		default:
 			return parseLiteral(s)
 		}
@@ -42,20 +42,23 @@ func parseLiteral(s *Scanner) (Node, error) {
 	var err error
 	b := &strings.Builder{}
 	a := s.index
+outer:
 	for {
-		c := s.Next()
-		if c == eof {
-			break
-		} else if c == '{' {
+		switch c := s.Next(); c {
+		case eof:
+			break outer
+		case '{':
 			s.Backup()
-			break // found meta
-		} else if c == '\\' {
+			break outer
+		case '\\':
 			c, err = parseEscape(s)
 			if err != nil {
 				return nil, err
 			}
+			fallthrough
+		default:
+			b.WriteRune(c)
 		}
-		b.WriteRune(c)
 	}
 	return literalNode{
 		node: newNode(s.text, a, s.index-a),
@@ -75,97 +78,122 @@ func parseEscape(s *Scanner) (rune, error) {
 	}
 }
 
-func parseExprList(s *Scanner) (Node, error) {
-	sub := make([]Node, 0)
-	for {
-		s.SkipWhite()
-		c := s.Next()
-		if c == eof {
-			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
-		}
+func parseMeta(s *Scanner) (Node, error) {
+	switch c := s.Next(); c {
+	case eof:
+		return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
+	case '{':
+		return parseExprList(s)
+	default:
+		return nil, newErr(ErrUnexpectedToken, NewSpan(s.text, s.index, 1))
+	}
+}
 
-		e, err := parseExpr(s)
+func parseExprList(s *Scanner) (Node, error) {
+	a, z := s.index, s.index
+	sub := make([]Node, 0)
+outer:
+	for {
+		e, err := parseExpr(s.SkipWhite())
 		if err != nil {
 			return nil, err
 		}
 		sub = append(sub, e)
-
-		s.SkipWhite()
-		c = s.Next()
-		if c == eof {
+		z = s.index
+		switch c := s.SkipWhite().Next(); c {
+		case eof:
 			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
-		} else if c == ',' {
-			continue
-		} else if c == '}' {
-			break
-		} else {
+		case ',':
+			continue outer
+		case '}':
+			break outer
+		default:
 			return nil, newErr(ErrUnexpectedToken, NewSpan(s.text, s.index, 1))
 		}
 	}
-	return nil, nil
+	return exprListNode{
+		node: newNode(s.text, a, z-a),
+		sub:  sub,
+	}, nil
 }
 
 func parseExpr(s *Scanner) (Node, error) {
-	s.SkipWhite()
 	a := s.index
 
-	pfx, name, err := parseQName(s)
+	names, err := parseQName(s)
 	if err != nil {
 		return nil, err
 	}
 
-	if pfx != "" && name != "" {
-		return exprLiteralNode{node: newNode(s.text, a, s.index-a), prefix: pfx, name: name}, nil
-	} else if pfx == "" && name != "" {
-		return exprLiteralNode{node: newNode(s.text, a, s.index-a), name: name}, nil
-	} else if pfx != "" && name == "" {
-		return exprMatchNode{node: newNode(s.text, a, s.index-a), prefix: pfx}, nil
-	} else { // prefix and name nil
-		return exprMatchNode{node: newNode(s.text, a, s.index-a)}, nil
+	if l := len(names); l == 1 {
+		if names[0] == wildcard {
+			return exprMatchNode{node: newNode(s.text, a, s.index-a)}, nil
+		} else {
+			return exprLiteralNode{node: newNode(s.text, a, s.index-a), name: names[0]}, nil
+		}
+	} else if l == 2 {
+		if names[0] == wildcard {
+			return nil, newErr(ErrInvalidQName, NewSpan(s.text, a, s.index-a))
+		} else if names[1] == wildcard {
+			return exprMatchNode{node: newNode(s.text, a, s.index-a), prefix: names[0]}, nil
+		} else {
+			return exprLiteralNode{node: newNode(s.text, a, s.index-a), prefix: names[0], name: names[1]}, nil
+		}
 	}
+
+	return nil, newErr(ErrInvalidQName, NewSpan(s.text, a, s.index-a))
 }
 
-func parseQName(s *Scanner) (string, string, error) {
-	pfx, err := parseIdent(s)
+func parseQName(s *Scanner) ([]string, error) {
+	var names []string
+
+	n, err := parseIdent(s)
 	if err != nil {
-		return "", "", err
+		return nil, err
+	}
+	names = append(names, n)
+
+outer:
+	for {
+		switch c := s.SkipWhite().Peek(); c {
+		case eof:
+			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
+		case '.':
+			s.Next()
+		default:
+			break outer
+		}
+
+		switch c := s.SkipWhite().Next(); c {
+		case eof:
+			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
+		case '*':
+			names = append(names, wildcard)
+			continue outer
+		}
+
+		n, err := parseIdent(s.Backup())
+		if err != nil {
+			return nil, err
+		}
+		names = append(names, n)
 	}
 
-	s.SkipWhite()
-	c := s.Next()
-	if c == eof {
-		return "", "", newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
-	} else if c != '.' {
-		s.Backup()
-		return "", pfx, nil
-	}
-
-	c = s.Next()
-	if c == eof {
-		return "", "", newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
-	} else if c == '*' {
-		return pfx, "", nil
-	} else {
-		s.Backup()
-	}
-
-	name, err := parseIdent(s)
-	if err != nil {
-		return "", "", err
-	}
-
-	return pfx, name, nil
+	return names, nil
 }
 
 func parseIdent(s *Scanner) (string, error) {
 	a := s.index
-	c := s.Next()
-	if c != '_' && !unicode.IsLetter(c) && !unicode.IsDigit(c) {
+	for {
+		c := s.Peek()
+		if c == '_' || unicode.IsLetter(c) || unicode.IsDigit(c) {
+			s.Next()
+		} else {
+			break
+		}
+	}
+	if s.index-a < 1 {
 		return "", newErr(ErrInvalidIdent, NewSpan(s.text, a, s.index-a))
 	}
-	for c = s.Next(); c == '_' || unicode.IsLetter(c) || unicode.IsDigit(c); {
-		c = s.Next()
-	}
-	s.Backup()
 	return s.text[a:s.index], nil
 }
