@@ -267,6 +267,36 @@ func TestParseProgram(t *testing.T) {
 			`Hello p after.`,
 		},
 		{
+			`Hello {*} after.`,
+			&Program{
+				node: newNode(`Hello {*} after.`, 0, len(`Hello {*} after.`)),
+				sub: []Node{
+					literalNode{
+						node: newNode(`Hello {*} after.`, 0, 6),
+						text: "Hello ",
+					},
+					exprListNode{
+						node: newNode(`Hello {*} after.`, 7, 1),
+						sub: []Node{
+							exprMatchNode{
+								node:   newNode(`Hello {*} after.`, 7, 1),
+								prefix: "",
+							},
+						},
+					},
+					literalNode{
+						node: newNode(`Hello {*} after.`, 9, 7),
+						text: " after.",
+					},
+				},
+			},
+			nil,
+			Context{
+				Columns: []string{"A", "B", "C"},
+			},
+			`Hello A, B, C after.`,
+		},
+		{
 			`Hello {z, p.*} after.`,
 			&Program{
 				node: newNode(`Hello {z, p.*} after.`, 0, len(`Hello {z, p.*} after.`)),

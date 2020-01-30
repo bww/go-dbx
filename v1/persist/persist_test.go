@@ -84,7 +84,7 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.C, ec.C)
 	}
 
-	var ed []testEntity
+	var ed []*testEntity
 	err = pst.Select(testTable, &ed, nil, `SELECT {*} FROM `+testTable+` ORDER BY c`)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		if assert.Len(t, ed, 2) {

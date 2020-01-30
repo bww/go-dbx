@@ -55,6 +55,15 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 	return &Values{kcols, kvals}, nil
 }
 
+func (m *FieldMapper) ColumnsForType(typ reflect.Type) []string {
+	var cols []string
+	x := m.TypeMap(typ)
+	for k, _ := range x.Names {
+		cols = append(cols, k)
+	}
+	return cols
+}
+
 func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 	var vcols, kcols []string
 	var vvals, kvals []interface{}
