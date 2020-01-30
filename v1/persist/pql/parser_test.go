@@ -107,6 +107,38 @@ func TestParseExpr(t *testing.T) {
 			"p",
 		},
 		{
+			`{*}`,
+			exprListNode{
+				node: newNode(`{*}`, 1, 1),
+				sub: []Node{
+					exprMatchNode{
+						node:   newNode(`{*}`, 1, 1),
+						prefix: "",
+					},
+				},
+			},
+			nil,
+			Context{},
+			"",
+		},
+		{
+			`{*}`,
+			exprListNode{
+				node: newNode(`{*}`, 1, 1),
+				sub: []Node{
+					exprMatchNode{
+						node:   newNode(`{*}`, 1, 1),
+						prefix: "",
+					},
+				},
+			},
+			nil,
+			Context{
+				Columns: []string{"A", "B"},
+			},
+			"A, B",
+		},
+		{
 			`{p, p.*}`,
 			exprListNode{
 				node: newNode(`{p, p.*}`, 1, 6),

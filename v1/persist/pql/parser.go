@@ -150,15 +150,15 @@ func parseExpr(s *Scanner) (Node, error) {
 
 func parseQName(s *Scanner) ([]string, error) {
 	var names []string
-
-	n, err := parseIdent(s)
-	if err != nil {
-		return nil, err
-	}
-	names = append(names, n)
-
 outer:
 	for {
+		n, err := parseWildcardIdent(s)
+		if err != nil {
+			return nil, err
+		}
+
+		names = append(names, n)
+
 		switch c := s.SkipWhite().Peek(); c {
 		case eof:
 			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
@@ -167,23 +167,22 @@ outer:
 		default:
 			break outer
 		}
-
-		switch c := s.SkipWhite().Next(); c {
-		case eof:
-			return nil, newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
-		case '*':
-			names = append(names, wildcard)
-			continue outer
-		}
-
-		n, err := parseIdent(s.Backup())
-		if err != nil {
-			return nil, err
-		}
-		names = append(names, n)
 	}
-
 	return names, nil
+}
+
+func parseWildcardIdent(s *Scanner) (string, error) {
+	switch c := s.SkipWhite().Next(); c {
+	case eof:
+		return "", newErr(ErrUnexpectedEOF, NewSpan(s.text, s.index, 0))
+	case '*':
+		return wildcard, nil
+	}
+	name, err := parseIdent(s.Backup())
+	if err != nil {
+		return "", err
+	}
+	return name, nil
 }
 
 func parseIdent(s *Scanner) (string, error) {
