@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/test"
@@ -82,6 +83,11 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
 		assert.Equal(t, e1.C, ec.C)
+	}
+
+	err = pst.Fetch(testTable, &ec, "THIS IS NOT A VALID IDENT, BRAH")
+	if assert.NotNil(t, err, "Expected an error") {
+		assert.Equal(t, dbx.ErrNotFound, err)
 	}
 
 	count, err := pst.Count(`SELECT COUNT(*) FROM ` + testTable)

@@ -7,6 +7,8 @@ import (
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/persist/pql"
+
+	dbsql "database/sql"
 )
 
 type Persister interface {
@@ -57,7 +59,9 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 	})
 
 	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
-	if err != nil {
+	if err == dbsql.ErrNoRows {
+		return dbx.ErrNotFound
+	} else if err != nil {
 		return err
 	}
 
