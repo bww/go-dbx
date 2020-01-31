@@ -15,7 +15,7 @@ type Persister interface {
 	Fetch(string, interface{}, interface{}) error
 	Count(string, ...interface{}) (int, error)
 	Select(interface{}, string, ...interface{}) error
-	Delete(string, interface{}, interface{}) error
+	Delete(string, interface{}) error
 }
 
 type persister struct {
@@ -193,19 +193,14 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 	return nil
 }
 
-func (p *persister) Delete(table string, ent, id interface{}) error {
+func (p *persister) Delete(table string, ent interface{}) error {
 	keys, _ := p.fm.Columns(ent)
-
 	if len(keys.Cols) != 1 {
 		return dbx.ErrInvalidKeyCount
 	}
 
-	sql, args := p.gen.Delete(table, ent, &entity.Columns{
-		Cols: keys.Cols,
-		Vals: []interface{}{id},
-	})
-
-	err := p.Context.Exec(sql, args...)
+	sql, args := p.gen.Delete(table, ent, keys)
+	_, err := p.Context.Exec(sql, args...)
 	if err != nil {
 		return err
 	}

@@ -98,4 +98,12 @@ func TestPersist(t *testing.T) {
 		}
 	}
 
+	err = pst.Delete(testTable, e1)
+	assert.Nil(t, err, fmt.Sprint(err))
+
+	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, 1, count)
+	}
+
 }
