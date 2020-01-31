@@ -84,7 +84,7 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.C, ec.C)
 	}
 
-	count, err := pst.Count(`SELECT COUNT(*) FROM` + testTable)
+	count, err := pst.Count(`SELECT COUNT(*) FROM ` + testTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 2, count)
 	}

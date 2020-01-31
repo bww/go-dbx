@@ -64,10 +64,12 @@ func (p *persister) Fetch(table string, ent interface{}, id interface{}) error {
 
 func (p *persister) Count(query string, args ...interface{}) (int, error) {
 	var n int
+
 	err := p.Context.QueryRow(query, args...).Scan(&n)
 	if err != nil {
 		return -1, err
 	}
+
 	return n, nil
 }
 
