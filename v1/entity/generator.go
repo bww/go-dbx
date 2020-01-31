@@ -147,3 +147,32 @@ func (g *Generator) Update(table string, entity interface{}, names []string) (st
 
 	return b.String(), args
 }
+
+func (g *Generator) Delete(table string, entity interface{}, keys *Columns) (string, []interface{}) {
+	if g.sorted {
+		sort.Sort(keys)
+	}
+
+	var n, x int
+	args := make([]interface{}, 0, len(keys.Vals))
+
+	b := &strings.Builder{}
+	b.WriteString("DELETE FROM ")
+	b.WriteString(table)
+	b.WriteString(" WHERE ")
+
+	n = 0
+	for i, e := range keys.Cols {
+		if n > 0 {
+			b.WriteString(" AND ")
+		}
+		b.WriteString(e)
+		b.WriteString(" = $")
+		b.WriteString(strconv.FormatInt(int64(x+1), 10))
+		args = append(args, keys.Vals[i])
+		x++
+		n++
+	}
+
+	return b.String(), args
+}
