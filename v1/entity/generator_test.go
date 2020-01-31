@@ -15,7 +15,7 @@ func TestGeneratorInsert(t *testing.T) {
 		Args   []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA"},
+			testEntity{embedEntity{"BBB"}, "AAA", 999},
 			"some_table",
 			"INSERT INTO some_table (y, z) VALUES ($1, $2)",
 			[]interface{}{"BBB", "AAA"},
@@ -39,21 +39,21 @@ func TestGeneratorUpdate(t *testing.T) {
 		Args    []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA"},
+			testEntity{embedEntity{"BBB"}, "AAA", 999},
 			"some_table",
 			[]string{"z", "y"},
 			"UPDATE some_table SET y = $1, z = $2 WHERE z = $3",
 			[]interface{}{"BBB", "AAA", "AAA"},
 		},
 		{
-			testEntity{embedEntity{"BBB"}, "AAA"},
+			testEntity{embedEntity{"BBB"}, "AAA", 999},
 			"some_table",
 			nil,
 			"UPDATE some_table SET y = $1, z = $2 WHERE z = $3",
 			[]interface{}{"BBB", "AAA", "AAA"},
 		},
 		{
-			testEntity{embedEntity{"BBB"}, "AAA"},
+			testEntity{embedEntity{"BBB"}, "AAA", 999},
 			"some_table",
 			[]string{"z"},
 			"UPDATE some_table SET z = $1 WHERE z = $2",

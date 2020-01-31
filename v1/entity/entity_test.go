@@ -7,6 +7,7 @@ type embedEntity struct {
 type testEntity struct {
 	embedEntity
 	A string `db:"z,pk"`
+	D int    // ignored
 }
 
 type multiPKEntity struct {

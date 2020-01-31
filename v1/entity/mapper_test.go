@@ -16,7 +16,7 @@ func TestFieldMapper(t *testing.T) {
 		Values  []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA"},
+			testEntity{embedEntity{"BBB"}, "AAA", 999},
 			[]string{"z"},
 			[]string{"y", "z"},
 			[]interface{}{"BBB", "AAA"},

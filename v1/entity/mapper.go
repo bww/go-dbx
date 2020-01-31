@@ -28,7 +28,7 @@ type FieldMapper struct {
 
 func NewFieldMapper() *FieldMapper {
 	return &FieldMapper{
-		Mapper: reflectx.NewMapper(Tag),
+		Mapper: reflectx.NewMapperFunc(Tag, ignoreField),
 	}
 }
 
@@ -44,10 +44,12 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 	}
 
 	for k, f := range x.Names {
-		if f.Options != nil {
-			if _, ok := f.Options["pk"]; ok {
-				kcols = append(kcols, k)
-				kvals = append(kvals, reflectx.FieldByIndexes(e, f.Index))
+		if isExplicitMapping(f) {
+			if f.Options != nil {
+				if _, ok := f.Options["pk"]; ok {
+					kcols = append(kcols, k)
+					kvals = append(kvals, reflectx.FieldByIndexes(e, f.Index))
+				}
 			}
 		}
 	}
@@ -58,8 +60,10 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 func (m *FieldMapper) ColumnsForType(typ reflect.Type) []string {
 	var cols []string
 	x := m.TypeMap(typ)
-	for k, _ := range x.Names {
-		cols = append(cols, k)
+	for k, f := range x.Names {
+		if isExplicitMapping(f) {
+			cols = append(cols, k)
+		}
 	}
 	return cols
 }
@@ -72,25 +76,37 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 	x := m.TypeMap(e.Type())
 
 	for k, f := range x.Names {
-		var x interface{}
+		if isExplicitMapping(f) {
+			var x interface{}
 
-		v := reflectx.FieldByIndexes(e, f.Index)
-		if v.IsValid() && v.CanInterface() {
-			x = v.Interface()
-		} else {
-			x = f.Zero.Interface()
-		}
+			v := reflectx.FieldByIndexes(e, f.Index)
+			if v.IsValid() && v.CanInterface() {
+				x = v.Interface()
+			} else {
+				x = f.Zero.Interface()
+			}
 
-		vcols = append(vcols, k)
-		vvals = append(vvals, x)
+			vcols = append(vcols, k)
+			vvals = append(vvals, x)
 
-		if f.Options != nil {
-			if _, ok := f.Options["pk"]; ok {
-				kcols = append(kcols, k)
-				kvals = append(kvals, x)
+			if f.Options != nil {
+				if _, ok := f.Options["pk"]; ok {
+					kcols = append(kcols, k)
+					kvals = append(kvals, x)
+				}
 			}
 		}
 	}
 
 	return &Columns{kcols, kvals}, &Columns{vcols, vvals}
+}
+
+const ignoreName = "__ignore_field__"
+
+func ignoreField(n string) string {
+	return ignoreName
+}
+
+func isExplicitMapping(f *reflectx.FieldInfo) bool {
+	return f.Name != ignoreName
 }
