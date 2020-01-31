@@ -10,6 +10,7 @@ import (
 )
 
 type Persister interface {
+	dbx.Context
 	With(dbx.Context) Persister
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
