@@ -42,7 +42,7 @@ func TestPersist(t *testing.T) {
 		C: 888,
 	}
 
-	err = pst.Store(testTable, e1, nil, nil)
+	err = pst.Store(testTable, e1, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e1.A, 32)
 	}
@@ -54,7 +54,7 @@ func TestPersist(t *testing.T) {
 		C: 999,
 	}
 
-	err = pst.Store(testTable, e2, nil, nil)
+	err = pst.Store(testTable, e2, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e2.A, 32)
 	}
@@ -77,15 +77,20 @@ func TestPersist(t *testing.T) {
 	}
 
 	var ec testEntity
-	err = pst.Fetch(testTable, &ec, e1.A, nil)
+	err = pst.Fetch(testTable, &ec, e1.A)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
 		assert.Equal(t, e1.C, ec.C)
 	}
 
+	count, err := pst.Count(`SELECT COUNT(*) FROM` + testTable)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, 2, count)
+	}
+
 	var ed []*testEntity
-	err = pst.Select(testTable, &ed, nil, `SELECT {*} FROM `+testTable+` ORDER BY c`)
+	err = pst.Select(&ed, `SELECT {*} FROM `+testTable+` ORDER BY c`)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		if assert.Len(t, ed, 2) {
 			assert.Equal(t, e1, ed[0])

@@ -10,14 +10,15 @@ import (
 )
 
 type Persister interface {
-	Context(...dbx.Context) dbx.Context
-	Store(string, interface{}, []string, dbx.Context) error
-	Fetch(string, interface{}, interface{}, dbx.Context) error
-	Select(string, interface{}, dbx.Context, string, ...interface{}) error
+	With(dbx.Context) Persister
+	Store(string, interface{}, []string) error
+	Fetch(string, interface{}, interface{}) error
+	Count(string, ...interface{}) (int, error)
+	Select(interface{}, string, ...interface{}) error
 }
 
 type persister struct {
-	cxt dbx.Context // default context
+	dbx.Context
 	fm  *entity.FieldMapper
 	gen *entity.Generator
 	ids ident.Generator
@@ -25,23 +26,23 @@ type persister struct {
 
 func New(cxt dbx.Context, fm *entity.FieldMapper, ids ident.Generator) Persister {
 	return &persister{
-		cxt: cxt,
-		fm:  fm,
-		gen: entity.NewGenerator(fm),
-		ids: ids,
+		Context: cxt,
+		fm:      fm,
+		gen:     entity.NewGenerator(fm),
+		ids:     ids,
 	}
 }
 
-func (p *persister) Context(cxts ...dbx.Context) dbx.Context {
-	for _, e := range cxts {
-		if e != nil {
-			return e
-		}
+func (p *persister) With(cxt dbx.Context) Persister {
+	return &persister{
+		Context: cxt,
+		fm:      p.fm,
+		gen:     p.gen,
+		ids:     p.ids,
 	}
-	return p.cxt
 }
 
-func (p *persister) Fetch(table string, ent interface{}, id interface{}, cxt dbx.Context) error {
+func (p *persister) Fetch(table string, ent interface{}, id interface{}) error {
 	keys, _ := p.fm.Columns(ent)
 
 	if len(keys.Cols) != 1 {
@@ -53,7 +54,7 @@ func (p *persister) Fetch(table string, ent interface{}, id interface{}, cxt dbx
 		Vals: []interface{}{id},
 	})
 
-	err := p.Context(cxt).QueryRowx(sql, args...).StructScan(ent)
+	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,16 @@ func (p *persister) Fetch(table string, ent interface{}, id interface{}, cxt dbx
 	return nil
 }
 
-func (p *persister) Select(table string, ent interface{}, cxt dbx.Context, query string, args ...interface{}) error {
+func (p *persister) Count(query string, args ...interface{}) (int, error) {
+	var n int
+	err := p.Context.QueryRow(query, args...).Scan(&n)
+	if err != nil {
+		return -1, err
+	}
+	return n, nil
+}
+
+func (p *persister) Select(ent interface{}, query string, args ...interface{}) error {
 	val := reflect.ValueOf(ent)
 	ind := reflect.Indirect(val)
 
@@ -95,22 +105,22 @@ func (p *persister) Select(table string, ent interface{}, cxt dbx.Context, query
 	}
 
 	if many {
-		return p.selectMany(table, ent, val, cols, cxt, sql, args)
+		return p.selectMany(ent, val, cols, sql, args)
 	} else {
-		return p.selectOne(table, ent, val, cols, cxt, sql, args)
+		return p.selectOne(ent, val, cols, sql, args)
 	}
 }
 
-func (p *persister) selectOne(table string, ent interface{}, val reflect.Value, cols []string, cxt dbx.Context, sql string, args []interface{}) error {
-	return p.Context(cxt).QueryRowx(sql, args...).StructScan(ent)
+func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
+	return p.Context.QueryRowx(sql, args...).StructScan(ent)
 }
 
-func (p *persister) selectMany(table string, ent interface{}, val reflect.Value, cols []string, cxt dbx.Context, sql string, args []interface{}) error {
+func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
 	if val.Kind() != reflect.Ptr {
 		return dbx.ErrNotAPointer
 	}
 
-	rows, err := p.Context(cxt).Queryx(sql, args...)
+	rows, err := p.Context.Queryx(sql, args...)
 	if err != nil {
 		return err
 	}
@@ -139,7 +149,7 @@ func (p *persister) selectMany(table string, ent interface{}, val reflect.Value,
 	return nil
 }
 
-func (p *persister) Store(table string, ent interface{}, cols []string, cxt dbx.Context) error {
+func (p *persister) Store(table string, ent interface{}, cols []string) error {
 	var insert bool
 
 	keys, err := p.fm.Keys(ent)
@@ -172,7 +182,7 @@ func (p *persister) Store(table string, ent interface{}, cols []string, cxt dbx.
 		sql, args = p.gen.Update(table, ent, cols)
 	}
 
-	_, err = p.Context(cxt).Exec(sql, args...)
+	_, err = p.Context.Exec(sql, args...)
 	if err != nil {
 		return err
 	}
