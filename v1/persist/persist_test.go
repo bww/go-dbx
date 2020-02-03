@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 func TestPersist(t *testing.T) {
 	db := test.DB()
-	pst := New(db, entity.NewFieldMapper(), ident.AlphaNumeric(32))
+	pst := New(db, entity.NewFieldMapper(), NewRegistry(), ident.AlphaNumeric(32))
 	var err error
 
 	e1 := &testEntity{

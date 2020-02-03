@@ -11,6 +11,26 @@ import (
 	dbsql "database/sql"
 )
 
+type FetchRelatedPersister interface {
+	FetchRelated(Persister, interface{}) error
+}
+
+type StoreRelatedPersister interface {
+	StoreRelated(Persister, interface{}) error
+}
+
+type StoreRelationshipsPersister interface {
+	StoreRelationships(Persister, interface{}) error
+}
+
+type DeleteRelatedPersister interface {
+	DeleteRelated(Persister, interface{}) error
+}
+
+type DeleteRelationshipsPersister interface {
+	DeleteRelationships(Persister, interface{}) error
+}
+
 type Persister interface {
 	dbx.Context
 	With(dbx.Context) Persister
@@ -25,14 +45,16 @@ type persister struct {
 	dbx.Context
 	fm  *entity.FieldMapper
 	gen *entity.Generator
+	reg *Registry
 	ids ident.Generator
 }
 
-func New(cxt dbx.Context, fm *entity.FieldMapper, ids ident.Generator) Persister {
+func New(cxt dbx.Context, fm *entity.FieldMapper, reg *Registry, ids ident.Generator) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      fm,
 		gen:     entity.NewGenerator(fm),
+		reg:     reg,
 		ids:     ids,
 	}
 }
@@ -63,6 +85,16 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 		return dbx.ErrNotFound
 	} else if err != nil {
 		return err
+	}
+
+	pst, ok := p.reg.GetFor(ent)
+	if ok {
+		if c, ok := pst.(FetchRelatedPersister); ok {
+			err = c.FetchRelated(p, ent)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -120,7 +152,23 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 }
 
 func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
-	return p.Context.QueryRowx(sql, args...).StructScan(ent)
+
+	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
+	if err != nil {
+		return err
+	}
+
+	pst, ok := p.reg.Get(val.Type())
+	if ok {
+		if c, ok := pst.(FetchRelatedPersister); ok {
+			err = c.FetchRelated(p, ent)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
@@ -141,11 +189,26 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		ctype = etype.Elem()
 	}
 
+	var rel FetchRelatedPersister
+	pst, ok := p.reg.Get(val.Type())
+	if ok {
+		if c, ok := pst.(FetchRelatedPersister); ok {
+			rel = c
+		}
+	}
+
 	for rows.Next() {
 		elem := reflect.New(ctype)
-		err := rows.StructScan(elem.Interface())
+		eint := elem.Interface()
+		err := rows.StructScan(eint)
 		if err != nil {
 			return err
+		}
+		if rel != nil {
+			err = rel.FetchRelated(p, eint)
+			if err != nil {
+				return err
+			}
 		}
 		if etype.Kind() != reflect.Ptr {
 			elem = reflect.Indirect(elem)
@@ -195,6 +258,16 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 		return err
 	}
 
+	pst, ok := p.reg.GetFor(ent)
+	if ok {
+		if c, ok := pst.(StoreRelatedPersister); ok {
+			c.StoreRelated(p, ent)
+		}
+		if c, ok := pst.(StoreRelationshipsPersister); ok {
+			c.StoreRelationships(p, ent)
+		}
+	}
+
 	return nil
 }
 
@@ -202,6 +275,16 @@ func (p *persister) Delete(table string, ent interface{}) error {
 	keys, _ := p.fm.Columns(ent)
 	if len(keys.Cols) != 1 {
 		return dbx.ErrInvalidKeyCount
+	}
+
+	pst, ok := p.reg.GetFor(ent)
+	if ok {
+		if c, ok := pst.(DeleteRelationshipsPersister); ok {
+			c.DeleteRelationships(p, ent)
+		}
+		if c, ok := pst.(DeleteRelatedPersister); ok {
+			c.DeleteRelated(p, ent)
+		}
 	}
 
 	sql, args := p.gen.Delete(table, ent, keys)
