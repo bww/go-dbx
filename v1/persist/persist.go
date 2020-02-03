@@ -190,7 +190,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 	}
 
 	var rel FetchRelatedPersister
-	pst, ok := p.reg.Get(val.Type())
+	pst, ok := p.reg.Get(ctype)
 	if ok {
 		if c, ok := pst.(FetchRelatedPersister); ok {
 			rel = c

@@ -49,7 +49,8 @@ func (p *testPersister) FetchRelated(pst Persister, ent interface{}) error {
 	q := `
     SELECT {a.*} FROM ` + anotherTable + ` AS a
     INNER JOIN test_entity_r_another_entity AS r ON r.x = a.x
-    WHERE r.a = $1`
+    WHERE r.a = $1
+    ORDER BY a.z`
 
 	var another []*anotherEntity
 	err := pst.Select(&another, q, z.A)
@@ -57,7 +58,6 @@ func (p *testPersister) FetchRelated(pst Persister, ent interface{}) error {
 		return err
 	}
 
-	fmt.Println(">>>>>>>>>>>>>>", ent, another)
 	z.D = another
 	return nil
 }
@@ -80,6 +80,26 @@ func (p *testPersister) StoreRelationships(pst Persister, ent interface{}) error
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (p *testPersister) DeleteRelated(pst Persister, ent interface{}) error {
+	z := ent.(*testEntity)
+	for _, e := range z.D {
+		err := pst.Delete("another_entity", e)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *testPersister) DeleteRelationships(pst Persister, ent interface{}) error {
+	z := ent.(*testEntity)
+	_, err := pst.Exec(`DELETE FROM test_entity_r_another_entity WHERE a = $1`, z.A)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -171,6 +191,14 @@ func TestPersist(t *testing.T) {
 	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 1, count)
+	}
+
+	err = pst.Delete(testTable, e2)
+	assert.Nil(t, err, fmt.Sprint(err))
+
+	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, 0, count)
 	}
 
 }
