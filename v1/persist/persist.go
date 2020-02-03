@@ -261,10 +261,16 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 	pst, ok := p.reg.GetFor(ent)
 	if ok {
 		if c, ok := pst.(StoreRelatedPersister); ok {
-			c.StoreRelated(p, ent)
+			err := c.StoreRelated(p, ent)
+			if err != nil {
+				return err
+			}
 		}
 		if c, ok := pst.(StoreRelationshipsPersister); ok {
-			c.StoreRelationships(p, ent)
+			err := c.StoreRelationships(p, ent)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -280,10 +286,16 @@ func (p *persister) Delete(table string, ent interface{}) error {
 	pst, ok := p.reg.GetFor(ent)
 	if ok {
 		if c, ok := pst.(DeleteRelationshipsPersister); ok {
-			c.DeleteRelationships(p, ent)
+			err := c.DeleteRelationships(p, ent)
+			if err != nil {
+				return err
+			}
 		}
 		if c, ok := pst.(DeleteRelatedPersister); ok {
-			c.DeleteRelated(p, ent)
+			err := c.DeleteRelated(p, ent)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

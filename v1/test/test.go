@@ -64,7 +64,12 @@ func setup(conf *Config) error {
 		return fmt.Errorf("Creating %s (from %s): %v", conf.Name, initDB, err)
 	}
 
-	sharedDB, err = dbx.New(dburl(conf.Name))
+	dsn := dburl(conf.Name)
+	if debug.VERBOSE || debug.DEBUG {
+		fmt.Println("--> INIT ", dsn)
+	}
+
+	sharedDB, err = dbx.New(dsn)
 	if err != nil {
 		return err
 	}

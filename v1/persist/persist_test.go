@@ -3,6 +3,7 @@ package persist
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/bww/go-dbx/v1"
@@ -14,27 +15,82 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testTable = "dbx_v1_persist_test"
+func TestMain(m *testing.M) {
+	test.Init(testDB, test.WithMigrations(urls.File(env.Etc("migrations"))))
+	os.Exit(m.Run())
+}
+
+const (
+	testDB       = "dbx_v1_persist_test"
+	testTable    = "test_entity"
+	anotherTable = "another_entity"
+)
 
 type DontUseThisExportedEntity struct {
 	B string `db:"b"`
+}
+
+type anotherEntity struct {
+	X string `db:"x,pk"`
+	Z int    `db:"z"`
 }
 
 type testEntity struct {
 	*DontUseThisExportedEntity
 	A string `db:"a,pk"`
 	C int    `db:"c"`
+	D []*anotherEntity
 }
 
-func TestMain(m *testing.M) {
-	test.Init(testTable, test.WithMigrations(urls.File(env.Etc("migrations"))))
-	os.Exit(m.Run())
+type testPersister struct{}
+
+func (p *testPersister) FetchRelated(pst Persister, ent interface{}) error {
+	z := ent.(*testEntity)
+	q := `
+    SELECT {a.*} FROM ` + anotherTable + ` AS a
+    INNER JOIN test_entity_r_another_entity AS r ON r.x = a.x
+    WHERE r.a = $1`
+
+	var another []*anotherEntity
+	err := pst.Select(&another, q, z.A)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(">>>>>>>>>>>>>>", ent, another)
+	z.D = another
+	return nil
+}
+
+func (p *testPersister) StoreRelated(pst Persister, ent interface{}) error {
+	z := ent.(*testEntity)
+	for _, e := range z.D {
+		err := pst.Store("another_entity", e, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *testPersister) StoreRelationships(pst Persister, ent interface{}) error {
+	z := ent.(*testEntity)
+	for _, e := range z.D {
+		_, err := pst.Exec(`INSERT INTO test_entity_r_another_entity (a, x) VALUES ($1, $2)`, z.A, e.X)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func TestPersist(t *testing.T) {
 	db := test.DB()
-	pst := New(db, entity.NewFieldMapper(), NewRegistry(), ident.AlphaNumeric(32))
+	reg := NewRegistry()
+	pst := New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
 	var err error
+
+	reg.Set(reflect.ValueOf((*testEntity)(nil)).Type(), &testPersister{})
 
 	e1 := &testEntity{
 		DontUseThisExportedEntity: &DontUseThisExportedEntity{
@@ -53,6 +109,11 @@ func TestPersist(t *testing.T) {
 			B: "Never is this the value of B",
 		},
 		C: 999,
+		D: []*anotherEntity{
+			{Z: 111},
+			{Z: 222},
+			{Z: 333},
+		},
 	}
 
 	err = pst.Store(testTable, e2, nil)
