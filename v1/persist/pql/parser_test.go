@@ -208,6 +208,75 @@ func TestParseExpr(t *testing.T) {
 			},
 			"p, p.A, p.B, x.A, x.B",
 		},
+		{
+			`{$var}`,
+			exprListNode{
+				node: newNode(`{$var}`, 1, 4),
+				sub: []Node{
+					variableNode{
+						node: newNode(`{$var}`, 1, 4),
+						name: "var",
+					},
+				},
+			},
+			nil,
+			Context{
+				Vars: map[string]interface{}{
+					"var": "XYZ",
+				},
+			},
+			"XYZ",
+		},
+		{
+			`{$var, p}`,
+			exprListNode{
+				node: newNode(`{$var, p}`, 1, 7),
+				sub: []Node{
+					variableNode{
+						node: newNode(`{$var, p}`, 1, 4),
+						name: "var",
+					},
+					exprLiteralNode{
+						node:   newNode(`{$var, p}`, 7, 1),
+						prefix: "",
+						name:   "p",
+					},
+				},
+			},
+			nil,
+			Context{
+				Vars: map[string]interface{}{
+					"var": "XYZ",
+				},
+			},
+			"XYZ, p",
+		},
+		{
+			`{$var, p.*}`,
+			exprListNode{
+				node: newNode(`{$var, p.*}`, 1, 9),
+				sub: []Node{
+					variableNode{
+						node: newNode(`{$var, p.*}`, 1, 4),
+						name: "var",
+					},
+					exprMatchNode{
+						node:   newNode(`{$var, p.*}`, 7, 3),
+						prefix: "p",
+					},
+				},
+			},
+			nil,
+			Context{
+				Columns: []string{
+					"A", "B", "C",
+				},
+				Vars: map[string]interface{}{
+					"var": "XYZ",
+				},
+			},
+			"XYZ, p.A, p.B, p.C",
+		},
 	}
 	for _, e := range tests {
 		fmt.Println(">>>", e.Text)

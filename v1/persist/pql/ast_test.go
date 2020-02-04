@@ -95,6 +95,36 @@ func TestExecAST(t *testing.T) {
 			"p.a, x.a, x.b, x.c",
 			nil,
 		},
+		{
+			exprListNode{
+				node: newNode("{$var, p.a, x.*}", 7, 8),
+				sub: []Node{
+					variableNode{
+						node: newNode("{$var, p.a, x.*}", 1, 4),
+						name: "var",
+					},
+					exprLiteralNode{
+						node:   newNode("{$var, p.a, x.*}", 7, 3),
+						prefix: "p",
+						name:   "a",
+					},
+					exprMatchNode{
+						node:   newNode("{$var, p.a, x.*}", 12, 3),
+						prefix: "x",
+					},
+				},
+			},
+			Context{
+				Columns: []string{
+					"a", "b", "c",
+				},
+				Vars: map[string]interface{}{
+					"var": 123,
+				},
+			},
+			"123, p.a, x.a, x.b, x.c",
+			nil,
+		},
 	}
 	for _, e := range tests {
 		w := &strings.Builder{}

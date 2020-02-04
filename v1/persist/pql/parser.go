@@ -5,7 +5,10 @@ import (
 	"unicode"
 )
 
-const wildcard = "*"
+const (
+	wildcard = "*"
+	variable = '$'
+)
 
 func Parse(t string) (*Program, error) {
 	s := NewScanner(t)
@@ -122,6 +125,33 @@ outer:
 }
 
 func parseExpr(s *Scanner) (Node, error) {
+	switch s.Peek() {
+	case variable:
+		return parseVariableExpr(s)
+	default:
+		return parseColumnExpr(s)
+	}
+}
+
+func parseVariableExpr(s *Scanner) (Node, error) {
+	a := s.index
+
+	if s.Next() != variable {
+		return nil, newErr(ErrUnexpectedToken, NewSpan(s.text, s.index, 1))
+	}
+
+	name, err := parseIdent(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return variableNode{
+		node: newNode(s.text, a, s.index-a),
+		name: name,
+	}, nil
+}
+
+func parseColumnExpr(s *Scanner) (Node, error) {
 	a := s.index
 
 	names, err := parseQName(s)

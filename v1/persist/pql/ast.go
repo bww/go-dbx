@@ -8,6 +8,7 @@ import (
 
 type Context struct {
 	Columns []string
+	Vars    map[string]interface{}
 }
 
 type Node interface {
@@ -135,6 +136,19 @@ func (n exprMatchNode) Exec(w io.Writer, cxt Context) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+type variableNode struct {
+	node
+	name string
+}
+
+func (n variableNode) Exec(w io.Writer, cxt Context) error {
+	_, err := w.Write([]byte(stringer(cxt.Vars[n.name])))
+	if err != nil {
+		return err
 	}
 	return nil
 }
