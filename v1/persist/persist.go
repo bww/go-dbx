@@ -20,16 +20,16 @@ type StoreRelatedPersister interface {
 	StoreRelated(Persister, interface{}) error
 }
 
-type StoreRelationshipsPersister interface {
-	StoreRelationships(Persister, interface{}) error
+type StoreReferencesPersister interface {
+	StoreReferences(Persister, interface{}) error
 }
 
 type DeleteRelatedPersister interface {
 	DeleteRelated(Persister, interface{}) error
 }
 
-type DeleteRelationshipsPersister interface {
-	DeleteRelationships(Persister, interface{}) error
+type DeleteReferencesPersister interface {
+	DeleteReferences(Persister, interface{}) error
 }
 
 type Persister interface {
@@ -267,8 +267,8 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 				return err
 			}
 		}
-		if c, ok := pst.(StoreRelationshipsPersister); ok {
-			err := c.StoreRelationships(p, ent)
+		if c, ok := pst.(StoreReferencesPersister); ok {
+			err := c.StoreReferences(p, ent)
 			if err != nil {
 				return err
 			}
@@ -286,8 +286,8 @@ func (p *persister) Delete(table string, ent interface{}) error {
 
 	pst, ok := p.reg.GetFor(ent)
 	if ok {
-		if c, ok := pst.(DeleteRelationshipsPersister); ok {
-			err := c.DeleteRelationships(p, ent)
+		if c, ok := pst.(DeleteReferencesPersister); ok {
+			err := c.DeleteReferences(p, ent)
 			if err != nil {
 				return err
 			}

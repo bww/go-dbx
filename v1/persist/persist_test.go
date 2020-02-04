@@ -74,7 +74,7 @@ func (p *testPersister) StoreRelated(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) StoreRelationships(pst Persister, ent interface{}) error {
+func (p *testPersister) StoreReferences(pst Persister, ent interface{}) error {
 	z := ent.(*testEntity)
 	for _, e := range z.D {
 		_, err := pst.Exec(`INSERT INTO test_entity_r_another_entity (a, x) VALUES ($1, $2)`, z.A, e.X)
@@ -96,7 +96,7 @@ func (p *testPersister) DeleteRelated(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) DeleteRelationships(pst Persister, ent interface{}) error {
+func (p *testPersister) DeleteReferences(pst Persister, ent interface{}) error {
 	z := ent.(*testEntity)
 	_, err := pst.Exec(`DELETE FROM test_entity_r_another_entity WHERE a = $1`, z.A)
 	if err != nil {
