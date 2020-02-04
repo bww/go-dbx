@@ -9,6 +9,7 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
+	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
 	"github.com/bww/go-util/urls"
@@ -106,7 +107,7 @@ func (p *testPersister) DeleteRelationships(pst Persister, ent interface{}) erro
 
 func TestPersist(t *testing.T) {
 	db := test.DB()
-	reg := NewRegistry()
+	reg := registry.New()
 	pst := New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
 	var err error
 

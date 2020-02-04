@@ -7,6 +7,7 @@ import (
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/persist/pql"
+	"github.com/bww/go-dbx/v1/persist/registry"
 
 	dbsql "database/sql"
 )
@@ -45,11 +46,11 @@ type persister struct {
 	dbx.Context
 	fm  *entity.FieldMapper
 	gen *entity.Generator
-	reg *Registry
+	reg *registry.Registry
 	ids ident.Generator
 }
 
-func New(cxt dbx.Context, fm *entity.FieldMapper, reg *Registry, ids ident.Generator) Persister {
+func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids ident.Generator) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      fm,

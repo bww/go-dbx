@@ -1,4 +1,4 @@
-package persist
+package registry
 
 import (
 	"reflect"
@@ -12,9 +12,25 @@ var (
 
 func DefaultRegistry() *Registry {
 	initOnce.Do(func() {
-		defaultRegistry = NewRegistry()
+		defaultRegistry = New()
 	})
 	return defaultRegistry
+}
+
+func Set(t reflect.Type, p interface{}) {
+	DefaultRegistry().Set(t, p)
+}
+
+func SetOnce(t reflect.Type, p interface{}) {
+	DefaultRegistry().SetOnce(t, p)
+}
+
+func Get(t reflect.Type) (interface{}, bool) {
+	return DefaultRegistry().Get(t)
+}
+
+func GetFor(v interface{}) (interface{}, bool) {
+	return DefaultRegistry().GetFor(v)
 }
 
 type Registry struct {
@@ -22,7 +38,7 @@ type Registry struct {
 	reg map[reflect.Type]interface{}
 }
 
-func NewRegistry() *Registry {
+func New() *Registry {
 	return &Registry{
 		sync.RWMutex{},
 		make(map[reflect.Type]interface{}),
