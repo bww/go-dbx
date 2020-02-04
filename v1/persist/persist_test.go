@@ -186,7 +186,7 @@ func TestPersist(t *testing.T) {
 		}
 	}
 
-	err = pst.Delete(testTable, e1)
+	err = pst.DeleteWithID(testTable, reflect.ValueOf((*testEntity)(nil)).Type(), e1.A)
 	assert.Nil(t, err, fmt.Sprint(err))
 
 	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)

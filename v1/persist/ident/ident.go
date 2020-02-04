@@ -31,3 +31,7 @@ func AlphaNumeric(n int) Generator {
 		return reflect.ValueOf(rand.RandomString(n))
 	}
 }
+
+func IsZero(v interface{}) bool {
+	return reflect.ValueOf(v).IsZero()
+}

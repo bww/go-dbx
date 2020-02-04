@@ -40,6 +40,7 @@ type Persister interface {
 	Count(string, ...interface{}) (int, error)
 	Select(interface{}, string, ...interface{}) error
 	Delete(string, interface{}) error
+	DeleteWithID(string, reflect.Type, interface{}) error
 }
 
 type persister struct {
@@ -300,7 +301,25 @@ func (p *persister) Delete(table string, ent interface{}) error {
 		}
 	}
 
-	sql, args := p.gen.Delete(table, ent, keys)
+	sql, args := p.gen.Delete(table, keys)
+	_, err := p.Context.Exec(sql, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *persister) DeleteWithID(table string, typ reflect.Type, id interface{}) error {
+	keys := p.fm.KeysForType(typ)
+	if len(keys) != 1 {
+		return dbx.ErrInvalidKeyCount
+	}
+
+	sql, args := p.gen.Delete(table, &entity.Columns{
+		Cols: keys,
+		Vals: []interface{}{id},
+	})
 	_, err := p.Context.Exec(sql, args...)
 	if err != nil {
 		return err

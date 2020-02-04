@@ -148,7 +148,7 @@ func (g *Generator) Update(table string, entity interface{}, names []string) (st
 	return b.String(), args
 }
 
-func (g *Generator) Delete(table string, entity interface{}, keys *Columns) (string, []interface{}) {
+func (g *Generator) Delete(table string, keys *Columns) (string, []interface{}) {
 	if g.sorted {
 		sort.Sort(keys)
 	}

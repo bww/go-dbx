@@ -145,7 +145,7 @@ func TestGeneratorDelete(t *testing.T) {
 	}
 	gen := &Generator{NewFieldMapper(), true}
 	for _, e := range tests {
-		sql, args := gen.Delete(e.Table, e.Entity, e.Keys)
+		sql, args := gen.Delete(e.Table, e.Keys)
 		fmt.Println("-->", sql)
 		assert.Equal(t, e.SQL, sql)
 		assert.Equal(t, e.Args, args)
