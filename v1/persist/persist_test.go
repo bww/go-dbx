@@ -12,12 +12,11 @@ import (
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
-	"github.com/bww/go-util/urls"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
-	test.Init(testDB, test.WithMigrations(urls.File(env.Etc("migrations"))))
+	test.Init(testDB, test.WithMigrations(env.Etc("migrations")))
 	os.Exit(m.Run())
 }
 

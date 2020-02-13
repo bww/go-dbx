@@ -75,10 +75,11 @@ func setup(conf *Config) error {
 	}
 
 	if conf.Migrations != "" {
-		err = sharedDB.Migrate(conf.Migrations)
+		rev, err := sharedDB.Migrate(conf.Migrations)
 		if err != nil {
 			return err
 		}
+		fmt.Printf("--> %s: %v\n", conf.Migrations, rev)
 	}
 
 	return nil

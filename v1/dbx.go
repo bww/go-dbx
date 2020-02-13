@@ -60,16 +60,24 @@ func New(dsn string, opts ...Option) (*DB, error) {
 	return d, err
 }
 
-func (d *DB) Migrate(rc string) (int, error) {
-	up := upgrade.New(upgrade.Config{
-		Resources: rc,
-		Driver:    postgres.New(d.dsn),
-	})
-
-	rev, err := up.Upgrade()
+func (d *DB) Migrate(rc string) (upgrade.Results, error) {
+	dr, err := postgres.New(d.dsn)
 	if err != nil {
-		return -1, err
+		return upgrade.Results{}, err
 	}
 
-	return rev, nil
+	up, err := upgrade.New(upgrade.Config{
+		Resources: rc,
+		Driver:    dr,
+	})
+	if err != nil {
+		return upgrade.Results{}, nil
+	}
+
+	res, err := up.Upgrade()
+	if err != nil {
+		return upgrade.Results{}, err
+	}
+
+	return res, nil
 }
