@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/bww/go-upgrade/v1"
+	"github.com/bww/go-upgrade/v1/driver/postgres"
 	"github.com/bww/go-util/debug"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
 	// "github.com/patrickmn/go-cache"
 
@@ -20,6 +20,7 @@ var defaultLogger = log.New(os.Stdout, "", 0)
 type DB struct {
 	*sqlx.DB
 	log   *log.Logger
+	dsn   string
 	debug bool
 }
 
@@ -34,7 +35,11 @@ func New(dsn string, opts ...Option) (*DB, error) {
 		return nil, err
 	}
 
-	d := &DB{DB: x, debug: debug.DEBUG}
+	d := &DB{
+		DB:    x,
+		dsn:   dsn,
+		debug: debug.DEBUG,
+	}
 
 	for _, e := range opts {
 		d, err = e(d)
@@ -55,21 +60,16 @@ func New(dsn string, opts ...Option) (*DB, error) {
 	return d, err
 }
 
-func (d *DB) Migrate(rc string) error {
-	v, err := postgres.WithInstance(d.DB.DB, &postgres.Config{})
+func (d *DB) Migrate(rc string) (int, error) {
+	up := upgrade.New(upgrade.Config{
+		Resources: rc,
+		Driver:    postgres.New(d.dsn),
+	})
+
+	rev, err := up.Upgrade()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(rc, "postgres", v)
-	if err != nil {
-		return err
-	}
-
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	return nil
+	return rev, nil
 }
