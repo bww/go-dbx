@@ -1,7 +1,6 @@
 package persist
 
 import (
-	"database/sql"
 	"reflect"
 
 	"github.com/bww/go-dbx/v1"
@@ -58,7 +57,7 @@ func (r *Row) ScanStruct(dest interface{}) error {
 }
 
 type Rows struct {
-	*sql.Rows
+	*sqlx.Rows
 	mapper *entity.FieldMapper
 	fields [][]int
 	omits  []bool
@@ -66,7 +65,7 @@ type Rows struct {
 	values []interface{}
 }
 
-func newRows(r *sql.Rows, m *entity.FieldMapper) *Rows {
+func newRows(r *sqlx.Rows, m *entity.FieldMapper) *Rows {
 	return &Rows{Rows: r, mapper: m}
 }
 

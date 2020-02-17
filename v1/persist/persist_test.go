@@ -153,11 +153,12 @@ func TestPersist(t *testing.T) {
 	}
 
 	var eb testEntity
-	err = db.QueryRowx(`SELECT a, b, c FROM `+testTable+` WHERE a = $1`, e1.A).StructScan(&eb)
+	err = db.QueryRowx(`SELECT a, b, c, e FROM `+testTable+` WHERE a = $1`, e2.A).StructScan(&eb)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		assert.Equal(t, e1.A, eb.A)
-		assert.Equal(t, e1.B, eb.B)
-		assert.Equal(t, e1.C, eb.C)
+		assert.Equal(t, e2.A, eb.A)
+		assert.Equal(t, e2.B, eb.B)
+		assert.Equal(t, e2.C, eb.C)
+		assert.Equal(t, e2.E, eb.E)
 	}
 
 	var ec testEntity
@@ -166,6 +167,16 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
 		assert.Equal(t, e1.C, ec.C)
+		assert.Equal(t, e1.E, ec.E)
+	}
+
+	var ed testEntity
+	err = pst.Fetch(testTable, &ed, e2.A)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, e2.A, ed.A)
+		assert.Equal(t, e2.B, ed.B)
+		assert.Equal(t, e2.C, ed.C)
+		assert.Equal(t, e2.E, ed.E)
 	}
 
 	err = pst.Fetch(testTable, &ec, "THIS IS NOT A VALID IDENT, BRAH")
@@ -178,12 +189,12 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, 2, count)
 	}
 
-	var ed []*testEntity
-	err = pst.Select(&ed, `SELECT {*} FROM `+testTable+` ORDER BY c`)
+	var ef []*testEntity
+	err = pst.Select(&ef, `SELECT {*} FROM `+testTable+` ORDER BY c`)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		if assert.Len(t, ed, 2) {
-			assert.Equal(t, e1, ed[0])
-			assert.Equal(t, e2, ed[1])
+		if assert.Len(t, ef, 2) {
+			assert.Equal(t, e1, ef[0])
+			assert.Equal(t, e2, ef[1])
 		}
 	}
 

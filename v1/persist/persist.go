@@ -182,7 +182,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		return dbx.ErrNotAPointer
 	}
 
-	raws, err := p.Context.Query(sql, args...)
+	raws, err := p.Context.Queryx(sql, args...)
 	if err != nil {
 		return err
 	}
