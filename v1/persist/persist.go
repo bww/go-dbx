@@ -178,11 +178,12 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		return dbx.ErrNotAPointer
 	}
 
-	rows, err := p.Context.Queryx(sql, args...)
+	raws, err := p.Context.Query(sql, args...)
 	if err != nil {
 		return err
 	}
 
+	rows := newRows(raws, p.fm)
 	eval := reflect.Indirect(val)
 	etype := eval.Type().Elem()
 	ctype := etype
@@ -202,7 +203,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 	for rows.Next() {
 		elem := reflect.New(ctype)
 		eint := elem.Interface()
-		err := rows.StructScan(eint)
+		err := rows.ScanStruct(eint)
 		if err != nil {
 			return err
 		}

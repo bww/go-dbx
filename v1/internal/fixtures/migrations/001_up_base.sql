@@ -2,7 +2,8 @@
 create table test_entity (
   a     varchar(64)     primary key not null,
   b     varchar(64),
-  c     integer
+  c     integer,
+  e     integer
 );
 
 create table another_entity (
