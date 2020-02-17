@@ -82,7 +82,9 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 		Vals: []interface{}{id},
 	})
 
-	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
+	raw := p.Context.QueryRowx(sql, args...)
+	row := newRow(raw, p.fm)
+	err := row.ScanStruct(ent)
 	if err == dbsql.ErrNoRows {
 		return dbx.ErrNotFound
 	} else if err != nil {
@@ -155,7 +157,9 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 
 func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
 
-	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
+	raw := p.Context.QueryRowx(sql, args...)
+	row := newRow(raw, p.fm)
+	err := row.ScanStruct(ent)
 	if err != nil {
 		return err
 	}
