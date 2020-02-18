@@ -188,6 +188,12 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 	}
 
 	rows := newRows(raws, p.fm)
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		}
+	}()
+
 	eval := reflect.Indirect(val)
 	etype := eval.Type().Elem()
 	ctype := etype
@@ -221,6 +227,11 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 			elem = reflect.Indirect(elem)
 		}
 		eval = reflect.Append(eval, elem)
+	}
+
+	err, rows = rows.Close(), nil
+	if err != nil {
+		return err
 	}
 
 	reflect.Indirect(val).Set(eval)
