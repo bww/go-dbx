@@ -11,7 +11,7 @@ me_home=$(cd "$me_home" && pwd)
 DLV="dlv"
 
 # parse arguments
-args=$(getopt d $*)
+args=$(getopt dcv $*)
 set -- $args
 for i; do
   case "$i"
@@ -19,13 +19,19 @@ for i; do
     -d)
       debug="true";
       shift;;
+    -c)
+      other_flags="$other_flags -cover";
+      shift;;
+    -v)
+      other_flags="$other_flags -v";
+      shift;;
     --)
       shift; break;;
   esac
 done
 
 if [ ! -z "$debug" ]; then
-  ETC="${me_home}/v1/internal/fixtures" "$DLV" test $* -- -test.v
+  ETC="${me_home}/v1/internal/fixtures" "$DLV" test $* -- $other_flags
 else
-  ETC="${me_home}/v1/internal/fixtures" go test -v $*
+  ETC="${me_home}/v1/internal/fixtures" go test$other_flags $*
 fi
