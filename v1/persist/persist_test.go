@@ -12,6 +12,7 @@ import (
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -228,7 +229,8 @@ type emptyEntity struct {
 }
 
 func TestPersistOmitEmpty(t *testing.T) {
-	pst := New(test.DB(), entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
+	db := test.DB()
+	pst := New(db, entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
 	var err error
 
 	e1 := &emptyEntity{}
@@ -246,6 +248,31 @@ func TestPersistOmitEmpty(t *testing.T) {
 		assert.Equal(t, false, c1.D)
 		assert.Equal(t, float64(0), c1.E)
 		assert.Equal(t, []byte(nil), c1.F)
+	}
+
+	x1 := struct {
+		Z                string
+		A, B, C, D, E, F interface{}
+	}{}
+	r1 := []interface{}{
+		&x1.Z,
+		&x1.A,
+		&x1.B,
+		&x1.C,
+		&x1.D,
+		&x1.E,
+		&x1.F,
+	}
+	err = db.QueryRow(`SELECT z, a, b, c, d, e, f FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		spew.Dump(r1)
+		assert.Equal(t, e1.Z, x1.Z)
+		assert.Equal(t, nil, x1.A)
+		assert.Equal(t, nil, x1.B)
+		assert.Equal(t, nil, x1.C)
+		assert.Equal(t, nil, x1.D)
+		assert.Equal(t, nil, x1.E)
+		assert.Equal(t, nil, x1.F)
 	}
 
 	e2 := &emptyEntity{
