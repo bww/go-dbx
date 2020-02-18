@@ -15,10 +15,10 @@ func TestGeneratorInsert(t *testing.T) {
 		Args   []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA", 999},
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 0},
 			"some_table",
-			"INSERT INTO some_table (y, z) VALUES ($1, $2)",
-			[]interface{}{"BBB", "AAA"},
+			"INSERT INTO some_table (e, y, z) VALUES ($1, $2, $3)",
+			[]interface{}{nil, "BBB", "AAA"},
 		},
 	}
 	gen := &Generator{NewFieldMapper(), true}
@@ -39,21 +39,21 @@ func TestGeneratorUpdate(t *testing.T) {
 		Args    []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA", 999},
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 0},
 			"some_table",
 			[]string{"z", "y"},
 			"UPDATE some_table SET y = $1, z = $2 WHERE z = $3",
 			[]interface{}{"BBB", "AAA", "AAA"},
 		},
 		{
-			testEntity{embedEntity{"BBB"}, "AAA", 999},
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 0},
 			"some_table",
 			nil,
-			"UPDATE some_table SET y = $1, z = $2 WHERE z = $3",
-			[]interface{}{"BBB", "AAA", "AAA"},
+			"UPDATE some_table SET e = $1, y = $2, z = $3 WHERE z = $4",
+			[]interface{}{nil, "BBB", "AAA", "AAA"},
 		},
 		{
-			testEntity{embedEntity{"BBB"}, "AAA", 999},
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 0},
 			"some_table",
 			[]string{"z"},
 			"UPDATE some_table SET z = $1 WHERE z = $2",
@@ -91,7 +91,7 @@ func TestGeneratorSelect(t *testing.T) {
 				Cols: []string{"z"},
 				Vals: []interface{}{"AAA"},
 			},
-			"SELECT y, z FROM some_table WHERE z = $1",
+			"SELECT e, y, z FROM some_table WHERE z = $1",
 			[]interface{}{"AAA"},
 		},
 		{

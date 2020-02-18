@@ -21,9 +21,10 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	testDB       = "dbx_v1_persist_test"
-	testTable    = "test_entity"
-	anotherTable = "another_entity"
+	testDB         = "dbx_v1_persist_test"
+	testTable      = "test_entity"
+	anotherTable   = "another_entity"
+	omitemptyTable = "omitempty_entity"
 )
 
 type DontUseThisExportedEntity struct {
@@ -39,6 +40,7 @@ type testEntity struct {
 	*DontUseThisExportedEntity
 	A string `db:"a,pk"`
 	C int    `db:"c"`
+	E int    `db:"e,omitempty"`
 	D []*anotherEntity
 }
 
@@ -129,6 +131,7 @@ func TestPersist(t *testing.T) {
 			B: "Never is this the value of B",
 		},
 		C: 999,
+		E: 111,
 		D: []*anotherEntity{
 			{Z: 111},
 			{Z: 222},
@@ -151,11 +154,12 @@ func TestPersist(t *testing.T) {
 	}
 
 	var eb testEntity
-	err = db.QueryRowx(`SELECT a, b, c FROM `+testTable+` WHERE a = $1`, e1.A).StructScan(&eb)
+	err = db.QueryRowx(`SELECT a, b, c, e FROM `+testTable+` WHERE a = $1`, e2.A).StructScan(&eb)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		assert.Equal(t, e1.A, eb.A)
-		assert.Equal(t, e1.B, eb.B)
-		assert.Equal(t, e1.C, eb.C)
+		assert.Equal(t, e2.A, eb.A)
+		assert.Equal(t, e2.B, eb.B)
+		assert.Equal(t, e2.C, eb.C)
+		assert.Equal(t, e2.E, eb.E)
 	}
 
 	var ec testEntity
@@ -164,6 +168,16 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
 		assert.Equal(t, e1.C, ec.C)
+		assert.Equal(t, e1.E, ec.E)
+	}
+
+	var ed testEntity
+	err = pst.Fetch(testTable, &ed, e2.A)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, e2.A, ed.A)
+		assert.Equal(t, e2.B, ed.B)
+		assert.Equal(t, e2.C, ed.C)
+		assert.Equal(t, e2.E, ed.E)
 	}
 
 	err = pst.Fetch(testTable, &ec, "THIS IS NOT A VALID IDENT, BRAH")
@@ -176,12 +190,12 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, 2, count)
 	}
 
-	var ed []*testEntity
-	err = pst.Select(&ed, `SELECT {*} FROM `+testTable+` ORDER BY c`)
+	var ef []*testEntity
+	err = pst.Select(&ef, `SELECT {*} FROM `+testTable+` ORDER BY c`)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		if assert.Len(t, ed, 2) {
-			assert.Equal(t, e1, ed[0])
-			assert.Equal(t, e2, ed[1])
+		if assert.Len(t, ef, 2) {
+			assert.Equal(t, e1, ef[0])
+			assert.Equal(t, e2, ef[1])
 		}
 	}
 
@@ -199,6 +213,88 @@ func TestPersist(t *testing.T) {
 	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 0, count)
+	}
+
+}
+
+type emptyEntity struct {
+	Z string  `db:"z,pk"`
+	A string  `db:"a,omitempty"`
+	B int     `db:"b,omitempty"`
+	C uint64  `db:"c,omitempty"`
+	D bool    `db:"d,omitempty"`
+	E float64 `db:"e,omitempty"`
+	F []byte  `db:"f,omitempty"`
+}
+
+func TestPersistOmitEmpty(t *testing.T) {
+	db := test.DB()
+	pst := New(db, entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
+	var err error
+
+	e1 := &emptyEntity{}
+	err = pst.Store(omitemptyTable, e1, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Len(t, e1.Z, 32)
+	}
+
+	var c1 emptyEntity
+	err = pst.Fetch(omitemptyTable, &c1, e1.Z)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, "", c1.A)
+		assert.Equal(t, int(0), c1.B)
+		assert.Equal(t, uint64(0), c1.C)
+		assert.Equal(t, false, c1.D)
+		assert.Equal(t, float64(0), c1.E)
+		assert.Equal(t, []byte(nil), c1.F)
+	}
+
+	x1 := struct {
+		Z                string
+		A, B, C, D, E, F interface{}
+	}{}
+	r1 := []interface{}{
+		&x1.Z,
+		&x1.A,
+		&x1.B,
+		&x1.C,
+		&x1.D,
+		&x1.E,
+		&x1.F,
+	}
+	err = db.QueryRow(`SELECT z, a, b, c, d, e, f FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, e1.Z, x1.Z)
+		assert.Equal(t, nil, x1.A)
+		assert.Equal(t, nil, x1.B)
+		assert.Equal(t, nil, x1.C)
+		assert.Equal(t, nil, x1.D)
+		assert.Equal(t, nil, x1.E)
+		assert.Equal(t, nil, x1.F)
+	}
+
+	e2 := &emptyEntity{
+		A: "String here.",
+		B: 999,
+		C: 888,
+		D: true,
+		E: 77.77,
+		F: []byte("And here"),
+	}
+	err = pst.Store(omitemptyTable, e2, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Len(t, e2.Z, 32)
+	}
+
+	var c2 emptyEntity
+	err = pst.Fetch(omitemptyTable, &c2, e2.Z)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		assert.Equal(t, "String here.", c2.A)
+		assert.Equal(t, int(999), c2.B)
+		assert.Equal(t, uint64(888), c2.C)
+		assert.Equal(t, true, c2.D)
+		assert.Equal(t, float64(77.77), c2.E)
+		assert.Equal(t, []byte("And here"), c2.F)
 	}
 
 }

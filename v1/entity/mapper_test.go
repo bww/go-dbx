@@ -16,10 +16,16 @@ func TestFieldMapper(t *testing.T) {
 		Values  []interface{}
 	}{
 		{
-			testEntity{embedEntity{"BBB"}, "AAA", 999},
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 0},
 			[]string{"z"},
-			[]string{"y", "z"},
-			[]interface{}{"BBB", "AAA"},
+			[]string{"e", "y", "z"},
+			[]interface{}{nil, "BBB", "AAA"},
+		},
+		{
+			testEntity{embedEntity{"BBB"}, "AAA", 999, 111},
+			[]string{"z"},
+			[]string{"e", "y", "z"},
+			[]interface{}{111, "BBB", "AAA"},
 		},
 	}
 	for _, e := range tests {

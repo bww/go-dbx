@@ -82,7 +82,9 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 		Vals: []interface{}{id},
 	})
 
-	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
+	raw := p.Context.QueryRowx(sql, args...)
+	row := newRow(raw, p.fm)
+	err := row.ScanStruct(ent)
 	if err == dbsql.ErrNoRows {
 		return dbx.ErrNotFound
 	} else if err != nil {
@@ -155,7 +157,9 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 
 func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
 
-	err := p.Context.QueryRowx(sql, args...).StructScan(ent)
+	raw := p.Context.QueryRowx(sql, args...)
+	row := newRow(raw, p.fm)
+	err := row.ScanStruct(ent)
 	if err != nil {
 		return err
 	}
@@ -178,10 +182,17 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		return dbx.ErrNotAPointer
 	}
 
-	rows, err := p.Context.Queryx(sql, args...)
+	raws, err := p.Context.Queryx(sql, args...)
 	if err != nil {
 		return err
 	}
+
+	rows := newRows(raws, p.fm)
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		}
+	}()
 
 	eval := reflect.Indirect(val)
 	etype := eval.Type().Elem()
@@ -202,7 +213,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 	for rows.Next() {
 		elem := reflect.New(ctype)
 		eint := elem.Interface()
-		err := rows.StructScan(eint)
+		err := rows.ScanStruct(eint)
 		if err != nil {
 			return err
 		}
@@ -216,6 +227,11 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 			elem = reflect.Indirect(elem)
 		}
 		eval = reflect.Append(eval, elem)
+	}
+
+	err, rows = rows.Close(), nil
+	if err != nil {
+		return err
 	}
 
 	reflect.Indirect(val).Set(eval)
