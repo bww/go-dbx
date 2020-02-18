@@ -109,7 +109,7 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 			vcols = append(vcols, k)
 			if f.Options == nil {
 				vvals = append(vvals, x)
-			} else if _, ok := f.Options[optionOmitEmpty]; ok && isEmptyValue(v) {
+			} else if _, ok := f.Options[optionOmitEmpty]; ok && isEmptyValue(x, v) {
 				vvals = append(vvals, nil)
 			} else {
 				vvals = append(vvals, x)

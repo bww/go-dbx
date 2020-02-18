@@ -26,12 +26,9 @@ github.com/bww/go-upgrade v0.0.0-20200213225829-c6bd7d3527ec h1:QZWu7xsYv7fr4hgM
 github.com/bww/go-upgrade v0.0.0-20200213225829-c6bd7d3527ec/go.mod h1:X4VhWfz1nXWtOTlNLrVV/Xv7bUzoT0XYR3Pg6mOrUM0=
 github.com/bww/go-upgrade v0.0.0-20200214150952-2af1432873e6 h1:rXPtx5jRWrfek59QQ/txC3ukyYhQuLrpYlDMpm/eyzo=
 github.com/bww/go-upgrade v0.0.0-20200214150952-2af1432873e6/go.mod h1:X4VhWfz1nXWtOTlNLrVV/Xv7bUzoT0XYR3Pg6mOrUM0=
-github.com/bww/go-util v0.0.0-20200127173535-c0f79df400b9 h1:mETvQkkkZYIgUSFrzjjjbeAvyN1HGWXMvogs2c//uyE=
-github.com/bww/go-util v0.0.0-20200127173535-c0f79df400b9/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
-github.com/bww/go-util v0.0.0-20200128180646-dbb3df291a5d h1:sctqBh0x/dS9vCj0tOAMLaQgbHWD/c1az6h/V+8OrlY=
-github.com/bww/go-util v0.0.0-20200128180646-dbb3df291a5d/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
-github.com/bww/go-util v0.0.0-20200204203829-ff5050ad549d h1:AQDSka6Z4Jxo6O44HfOnN4ON2P/4IBXAgF5Gea9b7PQ=
 github.com/bww/go-util v0.0.0-20200204203829-ff5050ad549d/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
+github.com/bww/go-util v1.0.0 h1:/BqCKDms3waQhmEZyf1jXmr8RLoqgA3nQSMjPNAZkaY=
+github.com/bww/go-util v1.0.0/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58/go.mod h1:EOBUe0h4xcZ5GoxqC5SDxFQ8gwyZPKQoEzownBlhI80=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=

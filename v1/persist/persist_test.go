@@ -5,13 +5,16 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
-	"github.com/bww/go-util/env"
+	"github.com/bww/go-util/v1/env"
+	"github.com/bww/go-util/v1/ulid"
+	"github.com/bww/go-util/v1/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -218,13 +221,16 @@ func TestPersist(t *testing.T) {
 }
 
 type emptyEntity struct {
-	Z string  `db:"z,pk"`
-	A string  `db:"a,omitempty"`
-	B int     `db:"b,omitempty"`
-	C uint64  `db:"c,omitempty"`
-	D bool    `db:"d,omitempty"`
-	E float64 `db:"e,omitempty"`
-	F []byte  `db:"f,omitempty"`
+	Z string    `db:"z,pk"`
+	A string    `db:"a,omitempty"`
+	B int       `db:"b,omitempty"`
+	C uint64    `db:"c,omitempty"`
+	D bool      `db:"d,omitempty"`
+	E float64   `db:"e,omitempty"`
+	F []byte    `db:"f,omitempty"`
+	G time.Time `db:"g,omitempty"`
+	H uuid.UUID `db:"h,omitempty"`
+	I ulid.ULID `db:"i,omitempty"`
 }
 
 func TestPersistOmitEmpty(t *testing.T) {
@@ -247,11 +253,14 @@ func TestPersistOmitEmpty(t *testing.T) {
 		assert.Equal(t, false, c1.D)
 		assert.Equal(t, float64(0), c1.E)
 		assert.Equal(t, []byte(nil), c1.F)
+		assert.Equal(t, time.Time{}, c1.G)
+		assert.Equal(t, uuid.Zero, c1.H)
+		assert.Equal(t, ulid.Zero, c1.I)
 	}
 
 	x1 := struct {
-		Z                string
-		A, B, C, D, E, F interface{}
+		Z                         string
+		A, B, C, D, E, F, G, H, I interface{}
 	}{}
 	r1 := []interface{}{
 		&x1.Z,
@@ -261,8 +270,11 @@ func TestPersistOmitEmpty(t *testing.T) {
 		&x1.D,
 		&x1.E,
 		&x1.F,
+		&x1.G,
+		&x1.H,
+		&x1.I,
 	}
-	err = db.QueryRow(`SELECT z, a, b, c, d, e, f FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
+	err = db.QueryRow(`SELECT z, a, b, c, d, e, f, g, h, i FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e1.Z, x1.Z)
 		assert.Equal(t, nil, x1.A)
@@ -271,8 +283,14 @@ func TestPersistOmitEmpty(t *testing.T) {
 		assert.Equal(t, nil, x1.D)
 		assert.Equal(t, nil, x1.E)
 		assert.Equal(t, nil, x1.F)
+		assert.Equal(t, nil, x1.G)
+		assert.Equal(t, nil, x1.H)
+		assert.Equal(t, nil, x1.I)
 	}
 
+	t1 := time.Now().UTC().Truncate(time.Millisecond)
+	u1 := uuid.New()
+	l1 := ulid.New()
 	e2 := &emptyEntity{
 		A: "String here.",
 		B: 999,
@@ -280,6 +298,9 @@ func TestPersistOmitEmpty(t *testing.T) {
 		D: true,
 		E: 77.77,
 		F: []byte("And here"),
+		G: t1,
+		H: u1,
+		I: l1,
 	}
 	err = pst.Store(omitemptyTable, e2, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
@@ -295,6 +316,9 @@ func TestPersistOmitEmpty(t *testing.T) {
 		assert.Equal(t, true, c2.D)
 		assert.Equal(t, float64(77.77), c2.E)
 		assert.Equal(t, []byte("And here"), c2.F)
+		assert.Equal(t, t1, c2.G)
+		assert.Equal(t, u1, c2.H)
+		assert.Equal(t, l1, c2.I)
 	}
 
 }

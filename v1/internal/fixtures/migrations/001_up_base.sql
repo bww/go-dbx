@@ -24,5 +24,8 @@ create table omitempty_entity (
   c     bigint,
   d     boolean,
   e     double precision,
-  f     bytea
+  f     bytea,
+  g     timestamp with time zone,
+  h     uuid,
+  i     varchar(26)
 );

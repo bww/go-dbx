@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/bww/go-dbx/v1"
-	"github.com/bww/go-util/debug"
+	"github.com/bww/go-util/v1/debug"
 )
 
 const initDB = "postgres"

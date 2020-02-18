@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/bww/go-util/text"
+	"github.com/bww/go-util/v1/text"
 	"github.com/jmoiron/sqlx"
 )
 

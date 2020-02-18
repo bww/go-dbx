@@ -7,7 +7,7 @@ import (
 
 	"github.com/bww/go-upgrade/v1"
 	"github.com/bww/go-upgrade/v1/driver/postgres"
-	"github.com/bww/go-util/debug"
+	"github.com/bww/go-util/v1/debug"
 	"github.com/jmoiron/sqlx"
 	// "github.com/patrickmn/go-cache"
 

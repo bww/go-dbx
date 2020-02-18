@@ -3,9 +3,9 @@ package ident
 import (
 	"reflect"
 
-	"github.com/bww/go-util/rand"
-	"github.com/bww/go-util/ulid"
-	"github.com/bww/go-util/uuid"
+	"github.com/bww/go-util/v1/rand"
+	"github.com/bww/go-util/v1/ulid"
+	"github.com/bww/go-util/v1/uuid"
 )
 
 type Generator func() reflect.Value

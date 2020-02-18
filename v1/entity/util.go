@@ -4,8 +4,19 @@ import (
 	"reflect"
 )
 
+// implemented by values that can express their zeronoess/emptiness
+type Zeroer interface {
+	IsZero() bool
+}
+
 // from encoding/json
-func isEmptyValue(v reflect.Value) bool {
+func isEmptyValue(x interface{}, v reflect.Value) bool {
+	switch c := x.(type) {
+	case nil:
+		return true
+	case Zeroer:
+		return c.IsZero()
+	}
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
