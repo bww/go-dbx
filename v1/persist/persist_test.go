@@ -12,7 +12,6 @@ import (
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/env"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -265,7 +264,6 @@ func TestPersistOmitEmpty(t *testing.T) {
 	}
 	err = db.QueryRow(`SELECT z, a, b, c, d, e, f FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		spew.Dump(r1)
 		assert.Equal(t, e1.Z, x1.Z)
 		assert.Equal(t, nil, x1.A)
 		assert.Equal(t, nil, x1.B)
