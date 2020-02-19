@@ -31,7 +31,7 @@ for i; do
 done
 
 if [ ! -z "$debug" ]; then
-  ETC="${me_home}/v1/internal/fixtures" "$DLV" test $* -- $other_flags
+  ETC="${me_home}/etc" "$DLV" test $* -- $other_flags
 else
-  ETC="${me_home}/v1/internal/fixtures" go test$other_flags $*
+  ETC="${me_home}/etc" go test$other_flags $*
 fi
