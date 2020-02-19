@@ -2,7 +2,7 @@ package filter
 
 type Option func(Filter) Filter
 
-func WithRange(r Range) Option {
+func WithLimit(r Range) Option {
 	return func(f Filter) Filter {
 		f.Limit = r
 		return f

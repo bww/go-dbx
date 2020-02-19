@@ -17,7 +17,7 @@ func TestFilterOptions(t *testing.T) {
 		},
 		{
 			[]Option{
-				WithRange(Range{2, 20}),
+				WithLimit(Range{2, 20}),
 			},
 			Filter{
 				Limit: Range{2, 20},
