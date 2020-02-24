@@ -188,6 +188,11 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, dbx.ErrNotFound, err)
 	}
 
+	err = pst.Select(&ec, `SELECT {*} FROM `+testTable+` WHERE a = 'THIS IS NOT A VALID IDENT, BRAH'`)
+	if assert.NotNil(t, err, "Expected an error") {
+		assert.Equal(t, dbx.ErrNotFound, err)
+	}
+
 	count, err := pst.Count(`SELECT COUNT(*) FROM ` + testTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 2, count)

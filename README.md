@@ -1,16 +1,16 @@
 # DBX – DataBase eXtensions
-DBX is a convenience layer built on [`database/sql`](https://golang.org/pkg/database/sql/) and [`sqlx`](https://github.com/jmoiron/sqlx) which aims to strike a very particular balance between automating drudgery and telling you how to model your data.
+DBX is a convenience layer built on [`database/sql`](https://golang.org/pkg/database/sql/) and [`sqlx`](https://github.com/jmoiron/sqlx) which aims to strike a very particular balance between automating SQL drudgery and telling you how to model or query your data.
 
 ## DBX is not an ORM (but it does some ORM stuff)
 Among other things, DBX:
 
 * Marshals fields from your structs into and out of a database,
 * Provides mechanisms for storing and fetching graphs of entities,
-* Makes very limited aspects of writing SQL easier.
+* Makes very specific aspects of writing SQL easier.
 
 Some of the things DBX **does not do** include:
 
-* Requiring you to interact with a Pseudo().Meta().Query().Language(),
+* Requiring you to interact with a `Functional().Meta().Query().Language()`,
 * Dictating any particular manner of modeling your data,
 * Generating source code or SQL (mostly).
 
@@ -49,21 +49,16 @@ Well, good news for us. Because _this is exactly the sort of thing DBX was creat
 What we need for this job is a _persister_. This is the high-level concept that deals with converting a struct to and from its database representation. Let's make one.
 
 ```go
-import (
-  "github.com/bww/go-dbx/v1/entity"
-  "github.com/bww/go-dbx/v1/persist"
-  "github.com/bww/go-dbx/v1/persist/ident"
-  "github.com/bww/go-dbx/v1/registry"
-)
-
-db := // make a *sql.DB somehow, I'm not your mom
 pst := persist.New(
-  db,
+  db, // make a *sqlx.DB somehow, I'm not your mom
   entity.DefaultFieldMapper(),
   registry.DefaultRegistry(),
-  ident.AlphaNumeric(32),
+  ident.AlphaNumeric(16),
 )
 ```
+We'll discuss some of those parameters later, but for the moment, note the last one. A persister sometimes needs to generate primary keys in order to insert new entities. `ident.AlphaNumeric(16)` returns a function that generates random alpha-numeric strings 16 characters long.
+
+There are a few common generators in the `ident` package that will create UUIDs, ULIDs, and random strings. If those don't meet your needs you can easily write your own.
 
 Ok, we have our persister now. Let's store an instance of our `User` type.
 
@@ -71,13 +66,20 @@ Ok, we have our persister now. Let's store an instance of our `User` type.
 user := &User{
   Username: "cooldude",
   Password: "some long hash",
-  Notes:    "This guy is one cool dude."
 }
 
 err := pst.Store("users", user, nil)
 if err != nil {
   panic(err)
 }
+```
+
+Now we have a database row like this:
+
+```
+| id | username | password | notes | created_at |
++----+----------+----------+-------+------------+
+|jnjIYRgmCIC0oCUE | cooldude | some long hash | NULL | 2020-02-20 15:24:38.743665+00 |
 ```
 
 As a special treat for us, before it persisted our entity, DBX used the identifier generator function we passed into our persister to create a new primary key for this record because it didn't have one. (If it did already have one, DBX would have performed an `UPDATE` using that key instead of an `INSERT`.)

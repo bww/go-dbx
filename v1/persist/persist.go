@@ -160,7 +160,9 @@ func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string,
 	raw := p.Context.QueryRowx(sql, args...)
 	row := newRow(raw, p.fm)
 	err := row.ScanStruct(ent)
-	if err != nil {
+	if err == dbsql.ErrNoRows {
+		return dbx.ErrNotFound
+	} else if err != nil {
 		return err
 	}
 
