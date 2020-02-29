@@ -9,8 +9,24 @@ func WithLimit(r Range) Option {
 	}
 }
 
+func WithOrder(o Order) Option {
+	return func(f Filter) Filter {
+		f.Order = o
+		return f
+	}
+}
+
+func WithTimeframe(t Timeframe) Option {
+	return func(f Filter) Filter {
+		f.Timeframe = t
+		return f
+	}
+}
+
 type Filter struct {
-	Limit Range
+	Limit     Range
+	Order     Order
+	Timeframe Timeframe
 }
 
 func New(opts ...Option) Filter {
