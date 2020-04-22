@@ -27,6 +27,7 @@ type Filter struct {
 	Limit     Range
 	Order     Order
 	Timeframe Timeframe
+	Params    map[string]interface{}
 }
 
 func New(opts ...Option) Filter {
