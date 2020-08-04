@@ -15,7 +15,6 @@ import (
 	"github.com/bww/go-util/v1/env"
 	"github.com/bww/go-util/v1/ulid"
 	"github.com/bww/go-util/v1/uuid"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -169,8 +168,6 @@ func TestPersist(t *testing.T) {
 	var ec testEntity
 	err = pst.Fetch(testTable, &ec, e1.A)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
-		spew.Dump(e1)
-		spew.Dump(ec)
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
 		assert.Equal(t, e1.C, ec.C)
