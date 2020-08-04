@@ -11,9 +11,10 @@ type Zeroer interface {
 
 // from encoding/json
 func isEmptyValue(x interface{}, v reflect.Value) bool {
-	switch c := x.(type) {
-	case nil:
+	if isNil(v) {
 		return true
+	}
+	switch c := x.(type) {
 	case Zeroer:
 		return c.IsZero()
 	}
@@ -28,8 +29,15 @@ func isEmptyValue(x interface{}, v reflect.Value) bool {
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
-	case reflect.Interface, reflect.Ptr:
-		return v.IsNil()
 	}
 	return false
+}
+
+func isNil(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }
