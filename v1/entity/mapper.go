@@ -68,7 +68,7 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 			if f.Options != nil {
 				if _, ok := f.Options[optionPrimaryKey]; ok {
 					kcols = append(kcols, k)
-					kvals = append(kvals, reflectx.FieldByIndexes(e, f.Index))
+					kvals = append(kvals, FieldByIndexes(e, f.Index))
 				}
 			}
 		}
@@ -99,7 +99,11 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 		if isExplicitMapping(f) {
 			var x interface{}
 
-			v := reflectx.FieldByIndexes(e, f.Index)
+			v, ok := FieldByIndexesRO(e, f.Index)
+			if !ok { // the field could not be fully traversed; an intermediate value is nil
+				vcols, vvals = append(vcols, k), append(vvals, nil)
+				continue
+			}
 			if v.IsValid() && v.CanInterface() {
 				x = v.Interface()
 			} else {
@@ -117,8 +121,7 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 
 			if f.Options != nil {
 				if _, ok := f.Options[optionPrimaryKey]; ok {
-					kcols = append(kcols, k)
-					kvals = append(kvals, x)
+					kcols, kvals = append(kcols, k), append(kvals, x)
 				}
 			}
 		}
@@ -170,6 +173,31 @@ func (m *FieldMapper) TraversalsByNameFunc(t reflect.Type, names []string, fn fu
 		}
 	}
 	return nil
+}
+
+func FieldByIndexes(v reflect.Value, indexes []int) reflect.Value {
+	for _, x := range indexes {
+		v = reflect.Indirect(v).Field(x)
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			v.Set(reflect.New(reflectx.Deref(v.Type())))
+		}
+		if v.Kind() == reflect.Map && v.IsNil() {
+			v.Set(reflect.MakeMap(v.Type()))
+		}
+	}
+	return v
+}
+
+func FieldByIndexesRO(v reflect.Value, indexes []int) (reflect.Value, bool) {
+	for _, i := range indexes {
+		v = reflect.Indirect(v)
+		if v.IsValid() {
+			v = v.Field(i)
+		} else {
+			return v, false
+		}
+	}
+	return v, true
 }
 
 type kinder interface {

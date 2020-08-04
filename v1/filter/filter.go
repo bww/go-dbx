@@ -37,3 +37,11 @@ func New(opts ...Option) Filter {
 	}
 	return f
 }
+
+func (f Filter) Param(n string) (interface{}, bool) {
+	if f.Params != nil {
+		v, ok := f.Params[n]
+		return v, ok
+	}
+	return nil, false
+}

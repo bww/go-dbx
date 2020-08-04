@@ -6,7 +6,6 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/jmoiron/sqlx"
-	"github.com/jmoiron/sqlx/reflectx"
 )
 
 type Row struct {
@@ -117,7 +116,7 @@ func fieldsByTraversal(v reflect.Value, fields [][]int, omits, temps []bool, val
 		if len(field) == 0 {
 			values[i], temps[i] = new(interface{}), false
 		} else {
-			f := reflectx.FieldByIndexes(v, field)
+			f := entity.FieldByIndexes(v, field)
 			if omits[i] && ptrs && f.Kind() != reflect.Ptr {
 				values[i], temps[i] = reflect.New(reflect.PtrTo(f.Type())).Interface(), true
 			} else if ptrs {
@@ -134,7 +133,7 @@ func finalizeFields(v reflect.Value, fields [][]int, temps []bool, values []inte
 	for i, e := range temps {
 		if e {
 			t := reflect.Indirect(reflect.ValueOf(values[i]))
-			f := reflectx.FieldByIndexes(v, fields[i])
+			f := entity.FieldByIndexes(v, fields[i])
 			if !t.IsNil() {
 				f.Set(reflect.Indirect(t))
 			} else { // explicitly set the zero value if the value is missing
