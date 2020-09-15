@@ -71,7 +71,7 @@ func (d *DB) Migrate(rc string) (upgrade.Results, error) {
 		Driver:    dr,
 	})
 	if err != nil {
-		return upgrade.Results{}, nil
+		return upgrade.Results{}, err
 	}
 
 	res, err := up.Upgrade()
