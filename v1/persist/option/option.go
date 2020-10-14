@@ -31,6 +31,15 @@ func UseConfig(c Config) Option {
 	}
 }
 
+func Cascade(on bool) Option {
+	return func(c Config) Config {
+		c.FetchRelated = on
+		c.StoreRelated = on
+		c.DeleteRelated = on
+		return c
+	}
+}
+
 func FetchRelated(on bool) Option {
 	return func(c Config) Config {
 		c.FetchRelated = on
