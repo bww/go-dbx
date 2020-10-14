@@ -18,15 +18,11 @@ func (c Config) Param(n string) (interface{}, bool) {
 type Option func(Config) Config
 
 func NewConfig(base Config, opts []Option) Config {
-	var err error
 	c := base
 	for _, f := range opts {
-		c, err = f(c)
-		if err != nil {
-			return c, err
-		}
+		c = f(c)
 	}
-	return c, nil
+	return c
 }
 
 func UseConfig(c Config) Option {

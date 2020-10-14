@@ -35,9 +35,8 @@ type DeleteReferencesPersister interface {
 
 type Persister interface {
 	dbx.Context
-	With(dbx.Context) Persister
-	WithReadOptions(...option.ReadOption) (Persister, error)
-	WithWriteOptions(...option.WriteOption) (Persister, error)
+	WithContext(dbx.Context) Persister
+	WithOptions(...option.Option) Persister
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
 	Count(string, ...interface{}) (int, error)
@@ -62,11 +61,15 @@ func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids id
 		gen:     entity.NewGenerator(fm),
 		reg:     reg,
 		ids:     ids,
-		conf:    option.NewConfig(option.Config{}, opts),
+		conf: option.NewConfig(option.Config{
+			FetchRelated:  true,
+			StoreRelated:  true,
+			DeleteRelated: true,
+		}, opts),
 	}
 }
 
-func (p *persister) With(cxt dbx.Context) Persister {
+func (p *persister) WithContext(cxt dbx.Context) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      p.fm,
