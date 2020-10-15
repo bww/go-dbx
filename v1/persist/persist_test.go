@@ -10,6 +10,7 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
+	"github.com/bww/go-dbx/v1/persist/option"
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/v1/env"
@@ -24,40 +25,40 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	testDB         = "dbx_v1_persist_test"
-	testTable      = "test_entity"
-	anotherTable   = "another_entity"
-	omitemptyTable = "omitempty_entity"
+	testDB      = "dbx_v1_persist_test"
+	firstTable  = "first_entity"
+	secondTable = "second_entity"
+	thirdTable  = "third_entity"
 )
 
-type DontUseThisExportedEntity struct {
+type DontUseThisTestEntity struct {
 	B string `db:"b"`
 }
 
-type anotherEntity struct {
+type firstEntity struct {
+	*DontUseThisTestEntity
+	A string `db:"a,pk"`
+	C int    `db:"c"`
+	E int    `db:"e,omitempty"`
+	D []*secondEntity
+}
+
+type secondEntity struct {
 	X string `db:"x,pk"`
 	Z int    `db:"z"`
 }
 
-type testEntity struct {
-	*DontUseThisExportedEntity
-	A string `db:"a,pk"`
-	C int    `db:"c"`
-	E int    `db:"e,omitempty"`
-	D []*anotherEntity
-}
+type firstPersister struct{}
 
-type testPersister struct{}
-
-func (p *testPersister) FetchRelated(pst Persister, ent interface{}) error {
-	z := ent.(*testEntity)
+func (p *firstPersister) FetchRelated(pst Persister, ent interface{}) error {
+	z := ent.(*firstEntity)
 	q := `
-    SELECT {a.*} FROM ` + anotherTable + ` AS a
-    INNER JOIN test_entity_r_another_entity AS r ON r.x = a.x
+    SELECT {a.*} FROM ` + secondTable + ` AS a
+    INNER JOIN first_entity_r_second_entity AS r ON r.x = a.x
     WHERE r.a = $1
     ORDER BY a.z`
 
-	var another []*anotherEntity
+	var another []*secondEntity
 	err := pst.Select(&another, q, z.A)
 	if err != nil {
 		return err
@@ -67,10 +68,10 @@ func (p *testPersister) FetchRelated(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) StoreRelated(pst Persister, ent interface{}) error {
-	z := ent.(*testEntity)
+func (p *firstPersister) StoreRelated(pst Persister, ent interface{}) error {
+	z := ent.(*firstEntity)
 	for _, e := range z.D {
-		err := pst.Store("another_entity", e, nil)
+		err := pst.Store("second_entity", e, nil)
 		if err != nil {
 			return err
 		}
@@ -78,10 +79,10 @@ func (p *testPersister) StoreRelated(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) StoreReferences(pst Persister, ent interface{}) error {
-	z := ent.(*testEntity)
+func (p *firstPersister) StoreReferences(pst Persister, ent interface{}) error {
+	z := ent.(*firstEntity)
 	for _, e := range z.D {
-		_, err := pst.Exec(`INSERT INTO test_entity_r_another_entity (a, x) VALUES ($1, $2)`, z.A, e.X)
+		_, err := pst.Exec(`INSERT INTO first_entity_r_second_entity (a, x) VALUES ($1, $2)`, z.A, e.X)
 		if err != nil {
 			return err
 		}
@@ -89,10 +90,10 @@ func (p *testPersister) StoreReferences(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) DeleteRelated(pst Persister, ent interface{}) error {
-	z := ent.(*testEntity)
+func (p *firstPersister) DeleteRelated(pst Persister, ent interface{}) error {
+	z := ent.(*firstEntity)
 	for _, e := range z.D {
-		err := pst.Delete("another_entity", e)
+		err := pst.Delete("second_entity", e)
 		if err != nil {
 			return err
 		}
@@ -100,9 +101,9 @@ func (p *testPersister) DeleteRelated(pst Persister, ent interface{}) error {
 	return nil
 }
 
-func (p *testPersister) DeleteReferences(pst Persister, ent interface{}) error {
-	z := ent.(*testEntity)
-	_, err := pst.Exec(`DELETE FROM test_entity_r_another_entity WHERE a = $1`, z.A)
+func (p *firstPersister) DeleteReferences(pst Persister, ent interface{}) error {
+	z := ent.(*firstEntity)
+	_, err := pst.Exec(`DELETE FROM first_entity_r_second_entity WHERE a = $1`, z.A)
 	if err != nil {
 		return err
 	}
@@ -110,54 +111,55 @@ func (p *testPersister) DeleteReferences(pst Persister, ent interface{}) error {
 }
 
 func TestPersist(t *testing.T) {
+	var err error
+
 	db := test.DB()
 	reg := registry.New()
 	pst := New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
-	var err error
 
-	reg.Set(reflect.ValueOf((*testEntity)(nil)).Type(), &testPersister{})
+	reg.Set(reflect.ValueOf((*firstEntity)(nil)).Type(), &firstPersister{})
 
-	e1 := &testEntity{
-		DontUseThisExportedEntity: &DontUseThisExportedEntity{
+	e1 := &firstEntity{
+		DontUseThisTestEntity: &DontUseThisTestEntity{
 			B: "This is the value of B",
 		},
 		C: 888,
 	}
 
-	err = pst.Store(testTable, e1, nil)
+	err = pst.Store(firstTable, e1, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e1.A, 32)
 	}
 
-	e2 := &testEntity{
-		DontUseThisExportedEntity: &DontUseThisExportedEntity{
+	e2 := &firstEntity{
+		DontUseThisTestEntity: &DontUseThisTestEntity{
 			B: "Never is this the value of B",
 		},
 		C: 999,
 		E: 111,
-		D: []*anotherEntity{
+		D: []*secondEntity{
 			{Z: 111},
 			{Z: 222},
 			{Z: 333},
 		},
 	}
 
-	err = pst.Store(testTable, e2, nil)
+	err = pst.Store(firstTable, e2, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e2.A, 32)
 	}
 
 	var ca, cb string
 	var cc int
-	err = db.QueryRow(`SELECT a, b, c FROM `+testTable+` WHERE a = $1`, e1.A).Scan(&ca, &cb, &cc)
+	err = db.QueryRow(`SELECT a, b, c FROM `+firstTable+` WHERE a = $1`, e1.A).Scan(&ca, &cb, &cc)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e1.A, ca)
 		assert.Equal(t, e1.B, cb)
 		assert.Equal(t, e1.C, cc)
 	}
 
-	var eb testEntity
-	err = db.QueryRowx(`SELECT a, b, c, e FROM `+testTable+` WHERE a = $1`, e2.A).StructScan(&eb)
+	var eb firstEntity
+	err = db.QueryRowx(`SELECT a, b, c, e FROM `+firstTable+` WHERE a = $1`, e2.A).StructScan(&eb)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e2.A, eb.A)
 		assert.Equal(t, e2.B, eb.B)
@@ -165,8 +167,8 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e2.E, eb.E)
 	}
 
-	var ec testEntity
-	err = pst.Fetch(testTable, &ec, e1.A)
+	var ec firstEntity
+	err = pst.Fetch(firstTable, &ec, e1.A)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e1.A, ec.A)
 		assert.Equal(t, e1.B, ec.B)
@@ -174,8 +176,8 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e1.E, ec.E)
 	}
 
-	var ed testEntity
-	err = pst.Fetch(testTable, &ed, e2.A)
+	var ed firstEntity
+	err = pst.Fetch(firstTable, &ed, e2.A)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e2.A, ed.A)
 		assert.Equal(t, e2.B, ed.B)
@@ -183,23 +185,23 @@ func TestPersist(t *testing.T) {
 		assert.Equal(t, e2.E, ed.E)
 	}
 
-	err = pst.Fetch(testTable, &ec, "THIS IS NOT A VALID IDENT, BRAH")
+	err = pst.Fetch(firstTable, &ec, "THIS IS NOT A VALID IDENT, BRAH")
 	if assert.NotNil(t, err, "Expected an error") {
 		assert.Equal(t, dbx.ErrNotFound, err)
 	}
 
-	err = pst.Select(&ec, `SELECT {*} FROM `+testTable+` WHERE a = 'THIS IS NOT A VALID IDENT, BRAH'`)
+	err = pst.Select(&ec, `SELECT {*} FROM `+firstTable+` WHERE a = 'THIS IS NOT A VALID IDENT, BRAH'`)
 	if assert.NotNil(t, err, "Expected an error") {
 		assert.Equal(t, dbx.ErrNotFound, err)
 	}
 
-	count, err := pst.Count(`SELECT COUNT(*) FROM ` + testTable)
+	count, err := pst.Count(`SELECT COUNT(*) FROM ` + firstTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 2, count)
 	}
 
-	var ef []*testEntity
-	err = pst.Select(&ef, `SELECT {*} FROM `+testTable+` ORDER BY c`)
+	var ef []*firstEntity
+	err = pst.Select(&ef, `SELECT {*} FROM `+firstTable+` ORDER BY c`)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		if assert.Len(t, ef, 2) {
 			assert.Equal(t, e1, ef[0])
@@ -207,25 +209,108 @@ func TestPersist(t *testing.T) {
 		}
 	}
 
-	err = pst.DeleteWithID(testTable, reflect.ValueOf((*testEntity)(nil)).Type(), e1.A)
+	err = pst.DeleteWithID(firstTable, reflect.ValueOf((*firstEntity)(nil)).Type(), e1.A)
 	assert.Nil(t, err, fmt.Sprint(err))
 
-	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
+	count, err = pst.Count(`SELECT COUNT(*) FROM ` + firstTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 1, count)
 	}
 
-	err = pst.Delete(testTable, e2)
+	err = pst.Delete(firstTable, e2)
 	assert.Nil(t, err, fmt.Sprint(err))
 
-	count, err = pst.Count(`SELECT COUNT(*) FROM ` + testTable)
+	count, err = pst.Count(`SELECT COUNT(*) FROM ` + firstTable)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, 0, count)
 	}
 
 }
 
-type emptyEntity struct {
+func TestPersistOptions(t *testing.T) {
+	db := test.DB()
+
+	var err error
+	var (
+		reg      = registry.New()
+		pst      = New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
+		nofetch  = pst.WithOptions(option.FetchRelated(false))
+		nostore  = pst.WithOptions(option.StoreRelated(false))
+		nodelete = pst.WithOptions(option.DeleteRelated(false))
+	)
+
+	reg.Set(reflect.ValueOf((*firstEntity)(nil)).Type(), &firstPersister{})
+
+	e1 := &firstEntity{
+		DontUseThisTestEntity: &DontUseThisTestEntity{
+			B: "This is the value of B",
+		},
+		C: 888,
+		D: []*secondEntity{
+			&secondEntity{
+				Z: 111,
+			},
+			&secondEntity{
+				Z: 222,
+			},
+		},
+	}
+
+	err = nostore.Store(firstTable, e1, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		eR := &firstEntity{}
+		err = nostore.Fetch(firstTable, eR, e1.A)
+		if assert.Nil(t, err, fmt.Sprint(err)) {
+			assert.Equal(t, &firstEntity{
+				DontUseThisTestEntity: e1.DontUseThisTestEntity,
+				A:                     e1.A,
+				C:                     e1.C,
+			}, eR)
+		}
+	}
+
+	err = pst.Store(firstTable, e1, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		eR := &firstEntity{}
+		err = nofetch.Fetch(firstTable, eR, e1.A)
+		if assert.Nil(t, err, fmt.Sprint(err)) {
+			assert.Equal(t, &firstEntity{
+				DontUseThisTestEntity: e1.DontUseThisTestEntity,
+				A:                     e1.A,
+				C:                     e1.C,
+			}, eR)
+		}
+	}
+
+	e2 := &firstEntity{
+		DontUseThisTestEntity: &DontUseThisTestEntity{
+			B: "You ain't never seen a B like this",
+		},
+		C: 456,
+		D: []*secondEntity{
+			&secondEntity{
+				Z: 333,
+			},
+			&secondEntity{
+				Z: 444,
+			},
+		},
+	}
+
+	err = pst.Store(firstTable, e2, nil)
+	if assert.Nil(t, err, fmt.Sprint(err)) {
+		eR := &firstEntity{}
+		err = pst.Fetch(firstTable, eR, e2.A)
+		if assert.Nil(t, err, fmt.Sprint(err)) {
+			assert.Equal(t, e2, eR)
+		}
+	}
+
+	err = nodelete.Delete(firstTable, e2)
+	assert.NotNil(t, err, "Expected consistency error")
+}
+
+type thirdEntity struct {
 	Z string    `db:"z,pk"`
 	A string    `db:"a,omitempty"`
 	B int       `db:"b,omitempty"`
@@ -243,14 +328,14 @@ func TestPersistOmitEmpty(t *testing.T) {
 	pst := New(db, entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
 	var err error
 
-	e1 := &emptyEntity{}
-	err = pst.Store(omitemptyTable, e1, nil)
+	e1 := &thirdEntity{}
+	err = pst.Store(thirdTable, e1, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e1.Z, 32)
 	}
 
-	var c1 emptyEntity
-	err = pst.Fetch(omitemptyTable, &c1, e1.Z)
+	var c1 thirdEntity
+	err = pst.Fetch(thirdTable, &c1, e1.Z)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, "", c1.A)
 		assert.Equal(t, int(0), c1.B)
@@ -279,7 +364,7 @@ func TestPersistOmitEmpty(t *testing.T) {
 		&x1.H,
 		&x1.I,
 	}
-	err = db.QueryRow(`SELECT z, a, b, c, d, e, f, g, h, i FROM `+omitemptyTable+` WHERE z = $1`, e1.Z).Scan(r1...)
+	err = db.QueryRow(`SELECT z, a, b, c, d, e, f, g, h, i FROM `+thirdTable+` WHERE z = $1`, e1.Z).Scan(r1...)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, e1.Z, x1.Z)
 		assert.Equal(t, nil, x1.A)
@@ -296,7 +381,7 @@ func TestPersistOmitEmpty(t *testing.T) {
 	t1 := time.Now().UTC().Truncate(time.Millisecond)
 	u1 := uuid.New()
 	l1 := ulid.New()
-	e2 := &emptyEntity{
+	e2 := &thirdEntity{
 		A: "String here.",
 		B: 999,
 		C: 888,
@@ -307,13 +392,13 @@ func TestPersistOmitEmpty(t *testing.T) {
 		H: u1,
 		I: l1,
 	}
-	err = pst.Store(omitemptyTable, e2, nil)
+	err = pst.Store(thirdTable, e2, nil)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Len(t, e2.Z, 32)
 	}
 
-	var c2 emptyEntity
-	err = pst.Fetch(omitemptyTable, &c2, e2.Z)
+	var c2 thirdEntity
+	err = pst.Fetch(thirdTable, &c2, e2.Z)
 	if assert.Nil(t, err, fmt.Sprint(err)) {
 		assert.Equal(t, "String here.", c2.A)
 		assert.Equal(t, int(999), c2.B)
