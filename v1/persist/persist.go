@@ -6,6 +6,7 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
+	"github.com/bww/go-dbx/v1/persist/option"
 	"github.com/bww/go-dbx/v1/persist/pql"
 	"github.com/bww/go-dbx/v1/persist/registry"
 
@@ -34,7 +35,8 @@ type DeleteReferencesPersister interface {
 
 type Persister interface {
 	dbx.Context
-	With(dbx.Context) Persister
+	WithContext(dbx.Context) Persister
+	WithOptions(...option.Option) Persister
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
 	Count(string, ...interface{}) (int, error)
@@ -45,28 +47,47 @@ type Persister interface {
 
 type persister struct {
 	dbx.Context
-	fm  *entity.FieldMapper
-	gen *entity.Generator
-	reg *registry.Registry
-	ids ident.Generator
+	fm   *entity.FieldMapper
+	gen  *entity.Generator
+	reg  *registry.Registry
+	ids  ident.Generator
+	conf option.Config
 }
 
-func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids ident.Generator) Persister {
+func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids ident.Generator, opts ...option.Option) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      fm,
 		gen:     entity.NewGenerator(fm),
 		reg:     reg,
 		ids:     ids,
+		conf: option.NewConfig(option.Config{
+			FetchRelated:  true,
+			StoreRelated:  true,
+			DeleteRelated: true,
+		}, opts),
 	}
 }
 
-func (p *persister) With(cxt dbx.Context) Persister {
+func (p *persister) WithContext(cxt dbx.Context) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      p.fm,
 		gen:     p.gen,
+		reg:     p.reg,
 		ids:     p.ids,
+		conf:    p.conf,
+	}
+}
+
+func (p *persister) WithOptions(opts ...option.Option) Persister {
+	return &persister{
+		Context: p.Context,
+		fm:      p.fm,
+		gen:     p.gen,
+		reg:     p.reg,
+		ids:     p.ids,
+		conf:    option.NewConfig(p.conf, opts),
 	}
 }
 
@@ -91,12 +112,13 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 		return err
 	}
 
-	pst, ok := p.reg.GetFor(ent)
-	if ok {
-		if c, ok := pst.(FetchRelatedPersister); ok {
-			err = c.FetchRelated(p, ent)
-			if err != nil {
-				return err
+	if p.conf.FetchRelated {
+		if pst, ok := p.reg.GetFor(ent); ok {
+			if c, ok := pst.(FetchRelatedPersister); ok {
+				err = c.FetchRelated(p, ent)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -166,12 +188,13 @@ func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string,
 		return err
 	}
 
-	pst, ok := p.reg.Get(val.Type())
-	if ok {
-		if c, ok := pst.(FetchRelatedPersister); ok {
-			err = c.FetchRelated(p, ent)
-			if err != nil {
-				return err
+	if p.conf.FetchRelated {
+		if pst, ok := p.reg.Get(val.Type()); ok {
+			if c, ok := pst.(FetchRelatedPersister); ok {
+				err = c.FetchRelated(p, ent)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -205,10 +228,11 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 	}
 
 	var rel FetchRelatedPersister
-	pst, ok := p.reg.Get(ctype)
-	if ok {
-		if c, ok := pst.(FetchRelatedPersister); ok {
-			rel = c
+	if p.conf.FetchRelated {
+		if pst, ok := p.reg.Get(ctype); ok {
+			if c, ok := pst.(FetchRelatedPersister); ok {
+				rel = c
+			}
 		}
 	}
 
@@ -278,18 +302,19 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 		return err
 	}
 
-	pst, ok := p.reg.GetFor(ent)
-	if ok {
-		if c, ok := pst.(StoreRelatedPersister); ok {
-			err := c.StoreRelated(p, ent)
-			if err != nil {
-				return err
+	if p.conf.StoreRelated {
+		if pst, ok := p.reg.GetFor(ent); ok {
+			if c, ok := pst.(StoreRelatedPersister); ok {
+				err := c.StoreRelated(p, ent)
+				if err != nil {
+					return err
+				}
 			}
-		}
-		if c, ok := pst.(StoreReferencesPersister); ok {
-			err := c.StoreReferences(p, ent)
-			if err != nil {
-				return err
+			if c, ok := pst.(StoreReferencesPersister); ok {
+				err := c.StoreReferences(p, ent)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -303,18 +328,19 @@ func (p *persister) Delete(table string, ent interface{}) error {
 		return dbx.ErrInvalidKeyCount
 	}
 
-	pst, ok := p.reg.GetFor(ent)
-	if ok {
-		if c, ok := pst.(DeleteReferencesPersister); ok {
-			err := c.DeleteReferences(p, ent)
-			if err != nil {
-				return err
+	if p.conf.DeleteRelated {
+		if pst, ok := p.reg.GetFor(ent); ok {
+			if c, ok := pst.(DeleteReferencesPersister); ok {
+				err := c.DeleteReferences(p, ent)
+				if err != nil {
+					return err
+				}
 			}
-		}
-		if c, ok := pst.(DeleteRelatedPersister); ok {
-			err := c.DeleteRelated(p, ent)
-			if err != nil {
-				return err
+			if c, ok := pst.(DeleteRelatedPersister); ok {
+				err := c.DeleteRelated(p, ent)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

@@ -87,7 +87,7 @@ As a special treat for us, before it persisted our entity, DBX used the identifi
 So once the `Store` call succeeds we can reference `user.Id`, which will be populated with the persisted record's primary key.
 
 ### Act Three, in which we restore the entity
-Alright, let's fetch it back now.
+Alright, let's fetch it back now and see what we're working with.
 
 ```go
 dup := &User{}
@@ -96,5 +96,7 @@ if err != nil {
   panic(err)
 }
 
-assertEqual(user, dup) // "Cha, brah"
+assertEqual(user, dup) // Sì – er, correcto
 ```
+
+That which was lost is now found.
