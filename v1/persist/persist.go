@@ -91,6 +91,14 @@ func (p *persister) WithOptions(opts ...option.Option) Persister {
 	}
 }
 
+func (p *persister) Param(name string) (interface{}, bool) {
+	if m := p.conf.Params; m != nil {
+		v, ok := m[name]
+		return v, ok
+	}
+	return nil, false
+}
+
 func (p *persister) Fetch(table string, ent, id interface{}) error {
 	keys, _ := p.fm.Columns(ent)
 
