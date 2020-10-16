@@ -37,6 +37,7 @@ type Persister interface {
 	dbx.Context
 	WithContext(dbx.Context) Persister
 	WithOptions(...option.Option) Persister
+	Config() option.Config
 	Param(name string) (interface{}, bool)
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
@@ -92,12 +93,15 @@ func (p *persister) WithOptions(opts ...option.Option) Persister {
 	}
 }
 
-func (p *persister) Param(name string) (interface{}, bool) {
+func (p *persister) Config() option.Config {
+	return p.conf
+}
+
+func (p *persister) Param(name string) interface{} {
 	if m := p.conf.Params; m != nil {
-		v, ok := m[name]
-		return v, ok
+		return m[name]
 	}
-	return nil, false
+	return nil
 }
 
 func (p *persister) Fetch(table string, ent, id interface{}) error {
