@@ -38,7 +38,7 @@ type Persister interface {
 	WithContext(dbx.Context) Persister
 	WithOptions(...option.Option) Persister
 	Config() option.Config
-	Param(name string) (interface{}, bool)
+	Param(name string) interface{}
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
 	Count(string, ...interface{}) (int, error)
