@@ -37,6 +37,7 @@ type Persister interface {
 	dbx.Context
 	WithContext(dbx.Context) Persister
 	WithOptions(...option.Option) Persister
+	Param(name string) (interface{}, bool)
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
 	Count(string, ...interface{}) (int, error)
