@@ -30,15 +30,21 @@ func New(dsn string, opts ...Option) (*DB, error) {
 		return nil, err
 	}
 
-	x, err := sqlx.Open(u.Scheme, dsn)
+	db, err := sqlx.Open(u.Scheme, dsn)
 	if err != nil {
 		return nil, err
 	}
 
+	return NewWithDB(db, opts...)
+}
+
+func NewWithDB(db *sqlx.DB, opts ...Option) (*DB, error) {
+	var err error
+
 	d := &DB{
-		DB:    x,
-		dsn:   dsn,
+		DB:    db,
 		debug: debug.DEBUG,
+		log:   defaultLogger,
 	}
 
 	for _, e := range opts {
@@ -46,10 +52,6 @@ func New(dsn string, opts ...Option) (*DB, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if d.log == nil {
-		d.log = defaultLogger
 	}
 
 	err = d.Ping()
