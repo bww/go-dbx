@@ -22,7 +22,7 @@ type database int
 const (
 	postgresDB database = iota
 	sqliteDB
-	unknownDB = -1
+	unknownDB database = -1
 )
 
 func parseDB(v string) database {
