@@ -10,6 +10,9 @@ me_home=$(cd "$me_home" && pwd)
 # deps
 DLV="dlv"
 
+# environment
+export PGTZ="utc"
+
 # parse arguments
 args=$(getopt dcv $*)
 set -- $args
