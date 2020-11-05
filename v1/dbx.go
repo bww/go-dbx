@@ -17,22 +17,22 @@ import (
 
 var defaultLogger = log.New(os.Stdout, "", 0)
 
-type datasource int
+type database int
 
 const (
-	postgresDS datasource = iota
-	sqliteDS
-	unknownDS = -1
+	postgresDB database = iota
+	sqliteDB
+	unknownDB = -1
 )
 
-func parseDS(v string) datasource {
+func parseDB(v string) database {
 	switch s := strings.ToLower(v); s {
 	case "postgres", "postgresql":
-		return postgresDS
+		return postgresDB
 	case "sqlite", "sqlite3":
-		return sqliteDS
+		return sqliteDB
 	default:
-		return unknownDS
+		return unknownDB
 	}
 }
 
@@ -50,10 +50,10 @@ func New(dsn string, opts ...Option) (*DB, error) {
 	}
 
 	var drv string
-	switch parseDS(u.Scheme) {
-	case postgresDS:
+	switch parseDB(u.Scheme) {
+	case postgresDB:
 		drv, dsn = "postgres", dsn
-	case sqliteDS:
+	case sqliteDB:
 		drv, dsn = "sqlite3", "file:"+u.Path+"?"+u.RawQuery
 	default:
 		drv, dsn = u.Scheme, dsn
@@ -93,8 +93,8 @@ func (d *DB) Migrate(rc string) (upgrade.Results, error) {
 	}
 
 	var drv upgrade.Driver
-	switch parseDS(u.Scheme) {
-	case postgresDS:
+	switch parseDB(u.Scheme) {
+	case postgresDB:
 		drv, err = postgres.New(d.dsn)
 	default:
 		err = ErrDriverNotSupported
