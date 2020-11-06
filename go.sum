@@ -28,6 +28,8 @@ github.com/bww/go-upgrade v0.0.0-20200214150952-2af1432873e6 h1:rXPtx5jRWrfek59Q
 github.com/bww/go-upgrade v0.0.0-20200214150952-2af1432873e6/go.mod h1:X4VhWfz1nXWtOTlNLrVV/Xv7bUzoT0XYR3Pg6mOrUM0=
 github.com/bww/go-upgrade v1.1.0 h1:6nZDg4hj8ZMFvMGMA99YPNLJ/eawJwzSluXqaEev+vw=
 github.com/bww/go-upgrade v1.1.0/go.mod h1:Nq1SblNdacKj9GAx3h6+PQbh/hfsrmD+5h6bH5lOzlU=
+github.com/bww/go-upgrade v1.2.0 h1:Hlm01BVEyldLuT240jJ3/51DbuN173Z8CJSdtYaiQEg=
+github.com/bww/go-upgrade v1.2.0/go.mod h1:BvZQIIiin1dXnrMur7OuHzTee6uOhQyVIwW86W+UACA=
 github.com/bww/go-util v0.0.0-20200204203829-ff5050ad549d/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
 github.com/bww/go-util v1.0.0 h1:/BqCKDms3waQhmEZyf1jXmr8RLoqgA3nQSMjPNAZkaY=
 github.com/bww/go-util v1.0.0/go.mod h1:eetI2LVCZPc50RTF1gSbNonGRWlT7UARNoILqCW2on8=
@@ -114,6 +116,8 @@ github.com/lib/pq v1.8.0 h1:9xohqzkUwzR4Ga4ivdTcawVS89YSDVxXMa3xJX3cGzg=
 github.com/lib/pq v1.8.0/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
+github.com/mattn/go-sqlite3 v1.14.4 h1:4rQjbDxdu9fSgI/r3KN72G3c2goxknAqHHgPWWs8UlI=
+github.com/mattn/go-sqlite3 v1.14.4/go.mod h1:WVKg1VTActs4Qso6iwGbiFih2UIHo0ENGwNd0Lj+XmI=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
