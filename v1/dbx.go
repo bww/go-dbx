@@ -8,6 +8,7 @@ import (
 
 	"github.com/bww/go-upgrade/v1"
 	"github.com/bww/go-upgrade/v1/driver/postgres"
+	"github.com/bww/go-upgrade/v1/driver/sqlite3"
 	"github.com/bww/go-util/v1/debug"
 	"github.com/jmoiron/sqlx"
 
@@ -38,19 +39,21 @@ func parseDB(v string) database {
 
 type DB struct {
 	*sqlx.DB
-	log   *log.Logger
-	dsn   string
-	debug bool
+	backend database
+	log     *log.Logger
+	debug   bool
 }
 
 func New(dsn string, opts ...Option) (*DB, error) {
+	var drv string
+
 	u, err := url.Parse(dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	var drv string
-	switch parseDB(u.Scheme) {
+	backend := parseDB(u.Scheme)
+	switch backend {
 	case postgresDB:
 		drv, dsn = "postgres", dsn
 	case sqliteDB:
@@ -65,10 +68,10 @@ func New(dsn string, opts ...Option) (*DB, error) {
 	}
 
 	d := &DB{
-		DB:    x,
-		dsn:   dsn,
-		debug: debug.DEBUG,
-		log:   defaultLogger,
+		DB:      x,
+		backend: backend,
+		debug:   debug.DEBUG,
+		log:     defaultLogger,
 	}
 
 	for _, e := range opts {
@@ -87,15 +90,14 @@ func New(dsn string, opts ...Option) (*DB, error) {
 }
 
 func (d *DB) Migrate(rc string) (upgrade.Results, error) {
-	u, err := url.Parse(d.dsn)
-	if err != nil {
-		return upgrade.Results{}, err
-	}
-
 	var drv upgrade.Driver
-	switch parseDB(u.Scheme) {
+	var err error
+
+	switch d.backend {
 	case postgresDB:
-		drv, err = postgres.New(d.dsn)
+		drv, err = postgres.NewWithDB(d.DB.DB)
+	case sqliteDB:
+		drv, err = sqlite3.NewWithDB(d.DB.DB)
 	default:
 		err = ErrDriverNotSupported
 	}
