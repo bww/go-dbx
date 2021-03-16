@@ -1,10 +1,12 @@
 package dbx
 
 import (
+	"context"
 	"log"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/bww/go-upgrade/v1"
 	"github.com/bww/go-upgrade/v1/driver/postgres"
@@ -119,4 +121,24 @@ func (d *DB) Migrate(rc string) (upgrade.Results, error) {
 	}
 
 	return res, nil
+}
+
+func (d *DB) Monitor(cxt context.Context) <-chan error {
+	var errs chan error
+	go func() {
+	loop:
+		for {
+			select {
+			case <-time.After(time.Minute):
+			case <-cxt.Done():
+				break loop
+			}
+			err := d.PingContext(cxt)
+			if err != nil {
+				errs <- err
+			}
+		}
+		close(errs)
+	}()
+	return errs
 }
