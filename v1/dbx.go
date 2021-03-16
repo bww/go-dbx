@@ -123,19 +123,27 @@ func (d *DB) Migrate(rc string) (upgrade.Results, error) {
 	return res, nil
 }
 
-func (d *DB) Monitor(cxt context.Context) <-chan error {
+func (d *DB) Monitor(cxt context.Context, iv time.Duration) <-chan error {
+	if iv < time.Second {
+		iv = time.Second
+	}
 	var errs chan error
 	go func() {
 	loop:
 		for {
 			select {
-			case <-time.After(time.Minute):
+			case <-time.After(iv):
 			case <-cxt.Done():
 				break loop
+			}
+			if d.debug {
+				d.log.Println("dbx: Polling database for connectivity")
 			}
 			err := d.PingContext(cxt)
 			if err != nil {
 				errs <- err
+			} else if d.debug {
+				d.log.Println("dbx: Connection OK")
 			}
 		}
 		close(errs)
