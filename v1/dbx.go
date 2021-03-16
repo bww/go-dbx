@@ -117,7 +117,7 @@ func (d *DB) Migrate(rc string) (upgrade.Results, error) {
 
 	res, err := up.Upgrade()
 	if err != nil {
-		return upgrade.Results{}, err
+		return res, err
 	}
 
 	return res, nil
