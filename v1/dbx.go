@@ -139,7 +139,9 @@ func (d *DB) Monitor(cxt context.Context, iv time.Duration) <-chan error {
 			if d.debug {
 				d.log.Println("dbx: Polling database for connectivity")
 			}
-			err := d.PingContext(cxt)
+			xcx, cancel := context.WithTimeout(cxt, time.Second*10)
+			err := d.PingContext(xcx)
+			cancel() // clean up if we complete before the timeout
 			if err != nil {
 				errs <- err
 			} else if d.debug {
