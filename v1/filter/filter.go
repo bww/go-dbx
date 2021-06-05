@@ -2,6 +2,12 @@ package filter
 
 type Option func(Filter) Filter
 
+func UseFilter(f Filter) Option {
+	return func(_ Filter) Filter {
+		return f // just replace with the provided filter
+	}
+}
+
 func WithLimit(r Range) Option {
 	return func(f Filter) Filter {
 		f.Limit = r

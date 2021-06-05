@@ -53,6 +53,14 @@ func TestFilterOptions(t *testing.T) {
 				Order:     Descending,
 			},
 		},
+		{
+			[]Option{
+				UseFilter(Filter{Limit: Range{100, 101}}),
+			},
+			Filter{
+				Limit: Range{100, 101},
+			},
+		},
 	}
 	for _, e := range tests {
 		f := New(e.Options...)
