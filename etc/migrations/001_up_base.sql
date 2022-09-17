@@ -29,3 +29,8 @@ create table third_entity (
   h     uuid,
   i     varchar(26)
 );
+
+create table fourth_entity (
+  x     varchar(64)     primary key not null,
+  z     integer
+);

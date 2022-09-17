@@ -29,6 +29,7 @@ const (
 	firstTable  = "first_entity"
 	secondTable = "second_entity"
 	thirdTable  = "third_entity"
+	fourthTable = "fourth_entity"
 )
 
 type DontUseThisTestEntity struct {
@@ -409,6 +410,27 @@ func TestPersistOmitEmpty(t *testing.T) {
 		assert.Equal(t, t1, c2.G)
 		assert.Equal(t, u1, c2.H)
 		assert.Equal(t, l1, c2.I)
+	}
+
+}
+
+func TestPersistFetchAndStoreInATightLoop(t *testing.T) {
+	db := test.DB()
+	pst := New(db, entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
+	var err error
+
+	for i := 0; i < 10; i++ {
+		var e2 secondEntity
+		err = pst.Select(&e2, `SELECT {*} FROM `+fourthTable+` WHERE x = $1`, fmt.Sprint(i))
+		if assert.NotNil(t, err, "Expected an error") {
+			assert.Equal(t, dbx.ErrNotFound, err)
+		}
+		e1 := &secondEntity{
+			X: fmt.Sprint(i),
+			Z: i,
+		}
+		_, err = pst.Exec(`INSERT INTO `+fourthTable+` (x, z) VALUES ($1, $2) ON CONFLICT (x) DO UPDATE SET z = $2`, e1.X, e1.Z)
+		assert.Nil(t, err, fmt.Sprint(err))
 	}
 
 }

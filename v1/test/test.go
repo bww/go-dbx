@@ -69,7 +69,7 @@ func setup(conf *Config) error {
 		fmt.Println("--> INIT ", dsn)
 	}
 
-	sharedDB, err = dbx.New(dsn)
+	sharedDB, err = dbx.New(dsn, dbx.WithMaxOpenConns(5), dbx.WithMaxIdleConns(5))
 	if err != nil {
 		return err
 	}
