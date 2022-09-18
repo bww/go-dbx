@@ -23,7 +23,7 @@ func (r *Row) ScanStruct(dest interface{}) error {
 	var scanned bool
 	defer func() {
 		if !scanned {
-			fmt.Printf("dbx: Row was not closed due to an internal error; forcing closed now: %v\n", err)
+			fmt.Printf("dbx: Row was not closed due to a parameter error; you are not using DBX correctly: %v\n", err)
 			r.Row.Scan() // scan to force sqlx to close its rows if we haven't done so already
 		}
 	}()

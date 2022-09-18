@@ -434,3 +434,17 @@ func TestPersistFetchAndStoreInATightLoop(t *testing.T) {
 	}
 
 }
+
+func TestInvalidParamInSelectOneDoesntLeakConns(t *testing.T) {
+	db := test.DB()
+	pst := New(db, entity.NewFieldMapper(), registry.New(), ident.AlphaNumeric(32))
+	var err error
+
+	for i := 0; i < 10; i++ {
+		var invalid int // invalid destination type
+		err = pst.Select(&invalid, `SELECT {*} FROM `+fourthTable+` WHERE x = $1`, fmt.Sprint(i))
+		assert.NotNil(t, err, "Expected an error")
+	}
+
+	// if we don't hang forever, we have succeeded
+}
