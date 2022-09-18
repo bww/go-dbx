@@ -154,7 +154,10 @@ func (m *FieldMapper) TraversalsByName(t reflect.Type, names []string) ([][]int,
 // a struct or Indirectable to a struct. Returns the first error returned by fn or nil.
 func (m *FieldMapper) TraversalsByNameFunc(t reflect.Type, names []string, fn func(int, []int, bool) error) error {
 	t = reflectx.Deref(t)
-	mustBe(t, reflect.Struct)
+	err := mustBe(t, reflect.Struct)
+	if err != nil {
+		return err
+	}
 	tm := m.TypeMap(t)
 	for i, name := range names {
 		fi, ok := tm.Names[name]
@@ -204,10 +207,11 @@ type kinder interface {
 	Kind() reflect.Kind
 }
 
-func mustBe(v kinder, expected reflect.Kind) {
+func mustBe(v kinder, expected reflect.Kind) error {
 	if k := v.Kind(); k != expected {
-		panic(&reflect.ValueError{Method: methodName(), Kind: k})
+		return &reflect.ValueError{Method: methodName(), Kind: k}
 	}
+	return nil
 }
 
 func methodName() string {

@@ -1,6 +1,7 @@
 package persist
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/bww/go-dbx/v1"
@@ -18,6 +19,15 @@ func newRow(r *sqlx.Row, m *entity.FieldMapper) *Row {
 }
 
 func (r *Row) ScanStruct(dest interface{}) error {
+	var err error
+	var scanned bool
+	defer func() {
+		if !scanned {
+			fmt.Printf("dbx: Row was not closed due to a parameter error; you are not using DBX correctly: %v\n", err)
+			r.Row.Scan() // scan to force sqlx to close its rows if we haven't done so already
+		}
+	}()
+
 	v := reflect.ValueOf(dest)
 	if v.Kind() != reflect.Ptr {
 		return dbx.ErrNotAPointer
@@ -40,8 +50,10 @@ func (r *Row) ScanStruct(dest interface{}) error {
 		return err
 	}
 
-	// scan out values, potentically including indirect placeholders for omittable fields
-	err = r.Scan(values...)
+	// Scan out values, potentically including indirect placeholders for omittable fields;
+	// NOTE THAT Scan() MUST BE INVOKED AS CALLING SCAN IS WHAT CLOSES THE UNDERLYING ROWS
+	// THAT ARE USED BY sqlx.
+	err, scanned = r.Scan(values...), true
 	if err != nil {
 		return err
 	}
