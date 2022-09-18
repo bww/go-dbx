@@ -53,8 +53,7 @@ func (r *Row) ScanStruct(dest interface{}) error {
 	// Scan out values, potentically including indirect placeholders for omittable fields;
 	// NOTE THAT Scan() MUST BE INVOKED AS CALLING SCAN IS WHAT CLOSES THE UNDERLYING ROWS
 	// THAT ARE USED BY sqlx.
-	err = r.Scan(values...)
-	scanned = true
+	err, scanned = r.Scan(values...), true
 	if err != nil {
 		return err
 	}
