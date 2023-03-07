@@ -36,8 +36,11 @@ type Filter struct {
 	Params    map[string]interface{}
 }
 
-func New(opts ...Option) Filter {
-	f := Filter{}
+func New(opts []Option) Filter {
+	return Filter{}.WithOptions(opts...)
+}
+
+func (f Filter) WithOptions(opts ...Option) Filter {
 	for _, o := range opts {
 		f = o(f)
 	}
