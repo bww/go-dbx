@@ -1,4 +1,4 @@
-package filter
+package query
 
 var ZeroRange = Range{}
 

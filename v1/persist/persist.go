@@ -84,7 +84,7 @@ func (p *persister) WithOptions(opts ...Option) Persister {
 		gen:     p.gen,
 		reg:     p.reg,
 		ids:     p.ids,
-		conf:    option.NewConfig(p.conf, opts),
+		conf:    p.conf.WithOptions(opts),
 	}
 }
 

@@ -13,13 +13,6 @@ func warnCascadeOptionDeprecated() {
 	})
 }
 
-type Config struct {
-	FetchRelated  bool
-	StoreRelated  bool
-	DeleteRelated bool
-	Params        map[string]interface{}
-}
-
 func (c Config) Param(n string) (interface{}, bool) {
 	if c.Params != nil {
 		v, ok := c.Params[n]
@@ -28,15 +21,21 @@ func (c Config) Param(n string) (interface{}, bool) {
 	return nil, false
 }
 
-type Option func(Config) Config
+type Config struct {
+	FetchRelated  bool
+	StoreRelated  bool
+	DeleteRelated bool
+	Params        map[string]interface{}
+}
 
-func NewConfig(base Config, opts []Option) Config {
-	c := base
+func (c Config) WithOptions(opts []Option) Config {
 	for _, f := range opts {
 		c = f(c)
 	}
 	return c
 }
+
+type Option func(Config) Config
 
 func UseConfig(c Config) Option {
 	return func(_ Config) Config {

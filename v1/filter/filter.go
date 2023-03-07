@@ -1,56 +1,28 @@
 package filter
 
-type Option func(Filter) Filter
+import (
+	"github.com/bww/go-dbx/v1/query"
+)
+
+// DEPRECATED: everything in this file is deprecated and
+// will be removed in a future release. Use counterpart
+// types and functions from the 'query' package instead.
+
+type Option = query.ReadOption
+type Filter = query.ReadConfig
+type Range = query.Range
+type Order = query.Order
+type Timeframe = query.Timeframe
 
 func UseFilter(f Filter) Option {
-	return func(_ Filter) Filter {
-		return f // just replace with the provided filter
-	}
+	return query.UseReadConfig(f)
 }
-
 func WithLimit(r Range) Option {
-	return func(f Filter) Filter {
-		f.Limit = r
-		return f
-	}
+	return query.WithLimit(r)
 }
-
 func WithOrder(o Order) Option {
-	return func(f Filter) Filter {
-		f.Order = o
-		return f
-	}
+	return query.WithOrder(o)
 }
-
 func WithTimeframe(t Timeframe) Option {
-	return func(f Filter) Filter {
-		f.Timeframe = t
-		return f
-	}
-}
-
-type Filter struct {
-	Limit     Range
-	Order     Order
-	Timeframe Timeframe
-	Params    map[string]interface{}
-}
-
-func New(opts []Option) Filter {
-	return Filter{}.WithOptions(opts...)
-}
-
-func (f Filter) WithOptions(opts ...Option) Filter {
-	for _, o := range opts {
-		f = o(f)
-	}
-	return f
-}
-
-func (f Filter) Param(n string) (interface{}, bool) {
-	if f.Params != nil {
-		v, ok := f.Params[n]
-		return v, ok
-	}
-	return nil, false
+	return query.WithTimeframe(t)
 }
