@@ -9,7 +9,7 @@ import (
 )
 
 // An SQL context. This defines a unified type that encompasses the basic
-// methods of sql.DB and sql.Tx so they can be used interchangably.
+// methods of sqlx.DB and sqlx.Tx so they can be used interchangably.
 type Context interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
@@ -55,6 +55,21 @@ func (d *DB) QueryRowx(query string, args ...interface{}) *sqlx.Row {
 
 func (d *DB) Wrap(cxt Context) Context {
 	return NewContext(cxt, d.log, d.debug)
+}
+
+// A transactional SQL context. This defines a unified type that
+// encompasses the basic methods of sqlx.Tx and other theoretical
+// transaction implementsions so that they can be used interchangably.
+type Tx interface {
+	Context
+	Commit() error
+	Rollback() error
+}
+
+// Determine if a context is implemented by a transaction or not
+func IsTx(cxt Context) bool {
+	_, ok := cxt.(Tx)
+	return ok
 }
 
 // A wrapped context. This is primarily useful for wrapping transactions to manage
