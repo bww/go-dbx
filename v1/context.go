@@ -57,6 +57,21 @@ func (d *DB) Wrap(cxt Context) Context {
 	return NewContext(cxt, d.log, d.debug)
 }
 
+// A transactional SQL context. This defines a unified type that
+// encompasses the basic methods of sql.Tx and other theoretical
+// transaction implementsions so that they can be used interchangably.
+type Tx interface {
+	Context
+	Commit() error
+	Rollback() error
+}
+
+// Determine if a context is implemented by a transaction or not
+func IsTx(cxt Context) bool {
+	_, ok := cxt.(Tx)
+	return ok
+}
+
 // A wrapped context. This is primarily useful for wrapping transactions to manage
 // logging and debugging parameters.
 type wrappedContext struct {
