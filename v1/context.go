@@ -9,7 +9,7 @@ import (
 )
 
 // An SQL context. This defines a unified type that encompasses the basic
-// methods of sql.DB and sql.Tx so they can be used interchangably.
+// methods of sqlx.DB and sqlx.Tx so they can be used interchangably.
 type Context interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
@@ -58,7 +58,7 @@ func (d *DB) Wrap(cxt Context) Context {
 }
 
 // A transactional SQL context. This defines a unified type that
-// encompasses the basic methods of sql.Tx and other theoretical
+// encompasses the basic methods of sqlx.Tx and other theoretical
 // transaction implementsions so that they can be used interchangably.
 type Tx interface {
 	Context
