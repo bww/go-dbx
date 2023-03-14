@@ -17,6 +17,7 @@ func TestPersist(t *testing.T) {
 
 	tx, err := db.Beginx()
 	assert.NoError(t, err)
-	assert.Equal(t, true, IsTx(tx))
 
+	assert.Equal(t, false, IsTx(db))
+	assert.Equal(t, true, IsTx(tx))
 }
