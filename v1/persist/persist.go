@@ -6,7 +6,6 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
-	"github.com/bww/go-dbx/v1/persist/option"
 	"github.com/bww/go-dbx/v1/persist/pql"
 	"github.com/bww/go-dbx/v1/persist/registry"
 
@@ -36,8 +35,8 @@ type DeleteReferencesPersister interface {
 type Persister interface {
 	dbx.Context
 	WithContext(dbx.Context) Persister
-	WithOptions(...option.Option) Persister
-	Config() option.Config
+	WithOptions(...Option) Persister
+	Config() Config
 	Param(name string) interface{}
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
@@ -53,21 +52,17 @@ type persister struct {
 	gen  *entity.Generator
 	reg  *registry.Registry
 	ids  ident.Generator
-	conf option.Config
+	conf Config
 }
 
-func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids ident.Generator, opts ...option.Option) Persister {
+func New(cxt dbx.Context, fm *entity.FieldMapper, reg *registry.Registry, ids ident.Generator, opts ...Option) Persister {
 	return &persister{
 		Context: cxt,
 		fm:      fm,
 		gen:     entity.NewGenerator(fm),
 		reg:     reg,
 		ids:     ids,
-		conf: option.NewConfig(option.Config{
-			FetchRelated:  true,
-			StoreRelated:  true,
-			DeleteRelated: true,
-		}, opts),
+		conf:    Config{}.WithOptions(opts),
 	}
 }
 
@@ -82,18 +77,18 @@ func (p *persister) WithContext(cxt dbx.Context) Persister {
 	}
 }
 
-func (p *persister) WithOptions(opts ...option.Option) Persister {
+func (p *persister) WithOptions(opts ...Option) Persister {
 	return &persister{
 		Context: p.Context,
 		fm:      p.fm,
 		gen:     p.gen,
 		reg:     p.reg,
 		ids:     p.ids,
-		conf:    option.NewConfig(p.conf, opts),
+		conf:    p.conf.WithOptions(opts),
 	}
 }
 
-func (p *persister) Config() option.Config {
+func (p *persister) Config() Config {
 	return p.conf
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/bww/go-dbx/v1"
 	"github.com/bww/go-dbx/v1/entity"
 	"github.com/bww/go-dbx/v1/persist/ident"
-	"github.com/bww/go-dbx/v1/persist/option"
 	"github.com/bww/go-dbx/v1/persist/registry"
 	"github.com/bww/go-dbx/v1/test"
 	"github.com/bww/go-util/v1/env"
@@ -116,7 +115,7 @@ func TestPersist(t *testing.T) {
 
 	db := test.DB()
 	reg := registry.New()
-	pst := New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
+	pst := New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32)).WithOptions(Cascade(true))
 
 	reg.Set(reflect.ValueOf((*firstEntity)(nil)).Type(), &firstPersister{})
 
@@ -234,10 +233,10 @@ func TestPersistOptions(t *testing.T) {
 	var err error
 	var (
 		reg      = registry.New()
-		pst      = New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32))
-		nofetch  = pst.WithOptions(option.FetchRelated(false))
-		nostore  = pst.WithOptions(option.StoreRelated(false))
-		nodelete = pst.WithOptions(option.DeleteRelated(false))
+		pst      = New(db, entity.NewFieldMapper(), reg, ident.AlphaNumeric(32)).WithOptions(Cascade(true))
+		nofetch  = pst.WithOptions(FetchRelated(false))
+		nostore  = pst.WithOptions(StoreRelated(false))
+		nodelete = pst.WithOptions(DeleteRelated(false))
 	)
 
 	reg.Set(reflect.ValueOf((*firstEntity)(nil)).Type(), &firstPersister{})

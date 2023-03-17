@@ -1,74 +1,27 @@
 package option
 
-type Config struct {
-	FetchRelated  bool
-	StoreRelated  bool
-	DeleteRelated bool
-	Params        map[string]interface{}
-}
+import (
+	"github.com/bww/go-dbx/v1/persist"
+)
 
-func (c Config) Param(n string) (interface{}, bool) {
-	if c.Params != nil {
-		v, ok := c.Params[n]
-		return v, ok
-	}
-	return nil, false
-}
-
-type Option func(Config) Config
-
-func NewConfig(base Config, opts []Option) Config {
-	c := base
-	for _, f := range opts {
-		c = f(c)
-	}
-	return c
-}
+type Config = persist.Config
+type Option = persist.Option
 
 func UseConfig(c Config) Option {
-	return func(_ Config) Config {
-		return c
-	}
+	return persist.UseConfig(c)
 }
-
 func Cascade(on bool) Option {
-	return func(c Config) Config {
-		c.FetchRelated = on
-		c.StoreRelated = on
-		c.DeleteRelated = on
-		return c
-	}
+	return persist.Cascade(on)
 }
-
 func FetchRelated(on bool) Option {
-	return func(c Config) Config {
-		c.FetchRelated = on
-		return c
-	}
+	return persist.FetchRelated(on)
 }
-
 func StoreRelated(on bool) Option {
-	return func(c Config) Config {
-		c.StoreRelated = on
-		return c
-	}
+	return persist.StoreRelated(on)
 }
-
 func DeleteRelated(on bool) Option {
-	return func(c Config) Config {
-		c.DeleteRelated = on
-		return c
-	}
+	return persist.DeleteRelated(on)
 }
-
 func Params(p map[string]interface{}) Option {
-	return func(c Config) Config {
-		if c.Params == nil {
-			c.Params = make(map[string]interface{})
-		}
-		for k, v := range p {
-			c.Params[k] = v
-		}
-		return c
-	}
+	return persist.Params(p)
 }

@@ -1,4 +1,4 @@
-package filter
+package query
 
 import (
 	"testing"
@@ -7,63 +7,63 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFilterOptions(t *testing.T) {
+func TestReadConfigOptions(t *testing.T) {
 	now, later := time.Now(), time.Now().Add(time.Hour)
 	tests := []struct {
-		Options []Option
-		Expect  Filter
+		ReadOptions []ReadOption
+		Expect      ReadConfig
 	}{
 		{
-			[]Option{},
-			Filter{},
+			[]ReadOption{},
+			ReadConfig{},
 		},
 		{
-			[]Option{
+			[]ReadOption{
 				WithLimit(Range{2, 20}),
 			},
-			Filter{
+			ReadConfig{
 				Limit: Range{2, 20},
 			},
 		},
 		{
-			[]Option{
+			[]ReadOption{
 				WithLimit(Range{2, 20}),
 				WithOrder(Ascending),
 			},
-			Filter{
+			ReadConfig{
 				Limit: Range{2, 20},
 				Order: Ascending,
 			},
 		},
 		{
-			[]Option{
+			[]ReadOption{
 				WithTimeframe(NewTimeframe(now, later)),
 			},
-			Filter{
+			ReadConfig{
 				Timeframe: NewTimeframe(now, later),
 			},
 		},
 		{
-			[]Option{
+			[]ReadOption{
 				WithTimeframe(NewTimeframe(now, later)),
 				WithOrder(Descending),
 			},
-			Filter{
+			ReadConfig{
 				Timeframe: NewTimeframe(now, later),
 				Order:     Descending,
 			},
 		},
 		{
-			[]Option{
-				UseFilter(Filter{Limit: Range{100, 101}}),
+			[]ReadOption{
+				UseReadConfig(ReadConfig{Limit: Range{100, 101}}),
 			},
-			Filter{
+			ReadConfig{
 				Limit: Range{100, 101},
 			},
 		},
 	}
 	for _, e := range tests {
-		f := New(e.Options...)
+		f := New(e.ReadOptions)
 		assert.Equal(t, e.Expect, f)
 	}
 }
