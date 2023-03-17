@@ -11,7 +11,7 @@ func (d *DB) Transaction(h TransactionHandler) error {
 		return err
 	}
 
-	err = h(d.Wrap(tx))
+	err = h(d.wrapTx(tx))
 	if err == nil {
 		err = tx.Commit()
 	} else if terr := tx.Rollback(); terr != nil {
