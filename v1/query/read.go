@@ -7,7 +7,7 @@ type ReadConfig struct {
 	Params    Params
 }
 
-func New(opts []ReadOption) ReadConfig {
+func NewReadConfig(opts []ReadOption) ReadConfig {
 	return ReadConfig{}.WithOptions(opts)
 }
 

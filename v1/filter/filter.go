@@ -13,6 +13,16 @@ type Range = query.Range
 type Order = query.Order
 type Timeframe = query.Timeframe
 
+const (
+	Ascending  Order = query.Ascending
+	Descending Order = query.Descending
+)
+
+var ZeroRange = query.ZeroRange
+
+func New(opts ...Option) Filter {
+	return query.NewReadConfig(opts)
+}
 func UseFilter(f Filter) Option {
 	return query.UseReadConfig(f)
 }
