@@ -63,7 +63,7 @@ func TestReadConfigOptions(t *testing.T) {
 		},
 	}
 	for _, e := range tests {
-		f := New(e.ReadOptions)
+		f := ReadConfig{}.WithOptions(e.ReadOptions)
 		assert.Equal(t, e.Expect, f)
 	}
 }
