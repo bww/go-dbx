@@ -7,6 +7,20 @@ type Range struct {
 	Length int `json:"length"`
 }
 
+func (r Range) WithOffset(x int) Range {
+	return Range{
+		Offset: x,
+		Length: r.Length,
+	}
+}
+
+func (r Range) WithLength(x int) Range {
+	return Range{
+		Offset: r.Offset,
+		Length: x,
+	}
+}
+
 type Order int
 
 const (
