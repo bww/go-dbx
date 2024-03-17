@@ -27,3 +27,12 @@ const (
 	Ascending Order = iota
 	Descending
 )
+
+func (o Order) String() string {
+	switch o {
+	case Descending:
+		return "DESC"
+	default:
+		return "ASC"
+	}
+}
