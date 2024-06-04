@@ -2,11 +2,12 @@ package query
 
 type Params map[string]interface{}
 
-func (p *Params) Set(k string, v interface{}) {
+func (p *Params) Set(k string, v interface{}) Params {
 	if *p == nil {
 		*p = make(Params)
 	}
 	(*p)[k] = v
+	return *p
 }
 
 func (p Params) Get(n string) (interface{}, bool) {
