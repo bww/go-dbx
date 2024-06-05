@@ -66,18 +66,24 @@ func setup(conf *Config) error {
 
 	dsn := dburl(conf.Name)
 	if debug.VERBOSE || debug.DEBUG {
-		fmt.Println("--> INIT ", dsn)
+		fmt.Println("--> SETUP", dsn)
 	}
 
 	sharedDB, err = dbx.New(dsn, dbx.WithMaxOpenConns(5), dbx.WithMaxIdleConns(5))
 	if err != nil {
-		return err
+		return fmt.Errorf("Could not create database: %w", err)
+	}
+	if debug.VERBOSE || debug.DEBUG {
+		fmt.Println("--> CREATED", sharedDB)
 	}
 
 	if conf.Migrations != "" {
+		if debug.VERBOSE || debug.DEBUG {
+			fmt.Println("--> MIGRATE", conf.Migrations)
+		}
 		rev, err := sharedDB.Migrate(conf.Migrations)
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not migrate: %w", err)
 		}
 		fmt.Printf("--> %s: %v\n", conf.Migrations, rev)
 	}
