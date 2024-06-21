@@ -27,6 +27,12 @@ func TestFieldMapper(t *testing.T) {
 			[]string{"e", "y", "z"},
 			[]interface{}{111, "BBB", "AAA"},
 		},
+		{
+			syntheticEntity{"AAA"},
+			[]string{"a"},
+			[]string{"a", "syn_1"},
+			[]interface{}{"AAA", 123},
+		},
 	}
 	for _, e := range tests {
 		k, c := m.Columns(e.Entity)

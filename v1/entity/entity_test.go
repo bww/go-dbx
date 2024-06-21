@@ -16,3 +16,14 @@ type multiPKEntity struct {
 	A string `db:"z,pk"`
 	C string `db:"x,pk"`
 }
+
+type syntheticEntity struct {
+	A string `db:"a,pk"`
+}
+
+func (s syntheticEntity) AdditionalColumns() *Columns {
+	return &Columns{
+		Cols: []string{"syn_1"},
+		Vals: []interface{}{123},
+	}
+}

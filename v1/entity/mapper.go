@@ -20,6 +20,19 @@ var (
 	defaultMapper *FieldMapper
 )
 
+// Synthetic is implemented by entities that produce additional "synthetic"
+// columns to be stored alongside columns derived from fields of the entity.
+//
+// Synthetic columns are read-only, they will not be fetched back from the
+// database. They are generally intended to be used in cases where derived
+// values are computed from the state of an entity when it it stored, perhaps
+// for indexing purposes.
+type Synthetic interface {
+	AdditionalColumns() *Columns
+}
+
+var typeOfSynthetic = reflect.TypeOf((*Synthetic)(nil)).Elem()
+
 func DefaultFieldMapper() *FieldMapper {
 	initOnce.Do(func() {
 		defaultMapper = NewFieldMapper()
@@ -127,7 +140,17 @@ func (m *FieldMapper) Columns(entity interface{}) (*Columns, *Columns) {
 		}
 	}
 
-	return &Columns{kcols, kvals}, &Columns{vcols, vvals}
+	rkcols := &Columns{kcols, kvals}
+	rvcols := &Columns{vcols, vvals}
+
+	if syn, ok := entity.(Synthetic); ok {
+		if acols := syn.AdditionalColumns(); acols != nil {
+			rvcols.Cols = append(rvcols.Cols, acols.Cols...)
+			rvcols.Vals = append(rvcols.Vals, acols.Vals...)
+		}
+	}
+
+	return rkcols, rvcols
 }
 
 // TraversalsByName returns a slice of int slices which represent the struct
