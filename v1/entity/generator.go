@@ -89,6 +89,72 @@ func (g *Generator) Insert(table string, entity interface{}) (string, []interfac
 	return b.String(), cols.Vals
 }
 
+func (g *Generator) Upsert(table string, entity interface{}, names []string) (string, []interface{}) {
+	keys, cols := g.fm.Columns(entity)
+	if g.sorted {
+		sort.Sort(keys)
+		sort.Sort(cols)
+	}
+
+	kset := make(map[string]struct{})
+	for _, k := range keys.Cols {
+		kset[k] = struct{}{}
+	}
+
+	ucols := make(map[string]int)
+	for i, e := range cols.Cols {
+		if _, ok := kset[e]; !ok {
+			ucols[e] = i
+		}
+	}
+
+	b := &strings.Builder{}
+	b.WriteString("INSERT INTO ")
+	b.WriteString(table)
+	b.WriteString(" (")
+
+	for i, e := range cols.Cols {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(e)
+	}
+
+	b.WriteString(") VALUES (")
+
+	for i, _ := range cols.Vals {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString("$")
+		b.WriteString(strconv.FormatInt(int64(i+1), 10))
+	}
+
+	b.WriteString(") ON CONFLICT (")
+
+	for i, e := range keys.Cols {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(e)
+	}
+
+	b.WriteString(") DO UPDATE SET ")
+
+	var n int
+	for e, i := range ucols {
+		if n > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(e)
+		b.WriteString(" = $")
+		b.WriteString(strconv.FormatInt(int64(i+1), 10))
+		n++
+	}
+
+	return b.String(), cols.Vals
+}
+
 func (g *Generator) Update(table string, entity interface{}, names []string) (string, []interface{}) {
 	keys, cols := g.fm.Columns(entity)
 	if g.sorted {

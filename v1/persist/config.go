@@ -25,6 +25,7 @@ type Config struct {
 	FetchRelated  bool
 	StoreRelated  bool
 	DeleteRelated bool
+	Upsert        bool
 	Params        map[string]interface{}
 }
 
@@ -39,6 +40,20 @@ type Option func(Config) Config
 
 func UseConfig(c Config) Option {
 	return func(_ Config) Config {
+		return c
+	}
+}
+
+func Upsert() Option {
+	return func(c Config) Config {
+		c.Upsert = true
+		return c
+	}
+}
+
+func Insert() Option {
+	return func(c Config) Config {
+		c.Upsert = false
 		return c
 	}
 }

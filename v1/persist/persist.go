@@ -273,13 +273,12 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 }
 
 func (p *persister) Store(table string, ent interface{}, cols []string) error {
-	var insert bool
-
 	keys, err := p.fm.Keys(ent)
 	if err != nil {
 		return err
 	}
 
+	var insert bool
 	for _, e := range keys.Vals {
 		if !e.IsValid() {
 			return dbx.ErrInvalidField
@@ -290,16 +289,20 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 		}
 	}
 
-	if insert {
+	if insert && !p.conf.Upsert {
 		if len(keys.Vals) != 1 {
 			return dbx.ErrInvalidKeyCount
 		}
-		keys.Vals[0].Set(p.ids()) // generate primary key
+		if p.ids != nil {
+			keys.Vals[0].Set(p.ids()) // generate primary key
+		}
 	}
 
 	var sql string
 	var args []interface{}
-	if insert {
+	if p.conf.Upsert {
+		sql, args = p.gen.Upsert(table, ent, cols)
+	} else if insert {
 		sql, args = p.gen.Insert(table, ent)
 	} else {
 		sql, args = p.gen.Update(table, ent, cols)
