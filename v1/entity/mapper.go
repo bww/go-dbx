@@ -12,6 +12,7 @@ import (
 const Tag = "db"
 const (
 	optionPrimaryKey = "pk"
+	optionOmitPQL    = "omitpql" // don't expand in PQL expressions
 	optionOmitEmpty  = "omitempty"
 )
 
@@ -32,6 +33,13 @@ type Synthetic interface {
 }
 
 var typeOfSynthetic = reflect.TypeOf((*Synthetic)(nil)).Elem()
+
+type FieldFilter func(*reflectx.FieldInfo) bool
+
+func ExcludeFromPQL(f *reflectx.FieldInfo) bool {
+	_, ok := f.Options[optionOmitPQL]
+	return !ok // exclude (false) when present
+}
 
 func DefaultFieldMapper() *FieldMapper {
 	initOnce.Do(func() {
@@ -90,10 +98,16 @@ func (m *FieldMapper) Keys(entity interface{}) (*Values, error) {
 	return &Values{kcols, kvals}, nil
 }
 
-func (m *FieldMapper) ColumnsForType(typ reflect.Type) []string {
+func (m *FieldMapper) ColumnsForType(typ reflect.Type, filters ...FieldFilter) []string {
 	var cols []string
 	x := m.TypeMap(typ)
+outer:
 	for k, f := range x.Names {
+		for _, filter := range filters {
+			if !filter(f) {
+				continue outer
+			}
+		}
 		if isExplicitMapping(f) {
 			cols = append(cols, k)
 		}

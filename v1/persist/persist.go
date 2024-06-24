@@ -167,7 +167,7 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 		typ = typ.Elem()
 	}
 
-	cols := p.fm.ColumnsForType(typ)
+	cols := p.fm.ColumnsForType(typ, entity.ExcludeFromPQL)
 
 	prg, err := pql.Parse(query)
 	if err != nil {
