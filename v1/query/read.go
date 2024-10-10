@@ -1,10 +1,19 @@
 package query
 
+type CachePolicy int
+
+const (
+	PreferCache  CachePolicy   = iota // prefer cached data when available
+	BypassCache                       // bypass any caching that would otherwise be used and re-fetch results
+	CacheDefault = PreferCache        // use the default caching policy, which is the same as the zero value
+)
+
 type ReadConfig struct {
-	Limit     Range
-	Order     Order
-	Timeframe Timeframe
-	Params    Params
+	Limit       Range
+	Order       Order
+	Timeframe   Timeframe
+	CachePolicy CachePolicy
+	Params      Params
 }
 
 func NewReadConfig(opts []ReadOption) ReadConfig {
