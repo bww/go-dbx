@@ -114,7 +114,7 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 	if err == dbsql.ErrNoRows {
 		return dbx.ErrNotFound
 	} else if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	if p.conf.FetchRelated {
@@ -136,7 +136,7 @@ func (p *persister) Count(query string, args ...interface{}) (int, error) {
 
 	err := p.Context.QueryRow(query, args...).Scan(&n)
 	if err != nil {
-		return -1, errors.New(err, query)
+		return -1, errors.NewWithSQL(err, query)
 	}
 
 	return n, nil
@@ -168,11 +168,11 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 
 	prg, err := pql.Parse(query)
 	if err != nil {
-		return errors.New(err, query)
+		return errors.NewWithSQL(err, query)
 	}
 	sql, err := prg.Text(pql.Context{Columns: cols})
 	if err != nil {
-		return errors.New(err, query)
+		return errors.NewWithSQL(err, query)
 	}
 
 	if many {
@@ -190,7 +190,7 @@ func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string,
 	if err == dbsql.ErrNoRows {
 		return dbx.ErrNotFound
 	} else if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	if p.conf.FetchRelated {
@@ -214,7 +214,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 
 	raws, err := p.Context.Queryx(sql, args...)
 	if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	rows := newRows(raws, p.fm)
@@ -246,7 +246,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		eint := elem.Interface()
 		err := rows.ScanStruct(eint)
 		if err != nil {
-			return errors.New(err, sql)
+			return errors.NewWithSQL(err, sql)
 		}
 		if rel != nil {
 			err = rel.FetchRelated(p, eint)
@@ -262,7 +262,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 
 	err, rows = rows.Close(), nil
 	if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	reflect.Indirect(val).Set(eval)
@@ -307,7 +307,7 @@ func (p *persister) Store(table string, ent interface{}, cols []string) error {
 
 	_, err := p.Context.Exec(sql, args...)
 	if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	if p.conf.StoreRelated {
@@ -356,7 +356,7 @@ func (p *persister) Delete(table string, ent interface{}) error {
 	sql, args := p.gen.Delete(table, keys)
 	_, err := p.Context.Exec(sql, args...)
 	if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	return nil
@@ -374,7 +374,7 @@ func (p *persister) DeleteWithID(table string, typ reflect.Type, id interface{})
 	})
 	_, err := p.Context.Exec(sql, args...)
 	if err != nil {
-		return errors.New(err, sql)
+		return errors.NewWithSQL(err, sql)
 	}
 
 	return nil
