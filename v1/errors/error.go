@@ -19,7 +19,11 @@ func NewWithSQL(err error, sql string) *SQLError {
 }
 
 func (e *SQLError) Error() string {
-	return fmt.Sprintf("%v <%s>", e.cause, text.CollapseSpaces(e.stmt))
+	return e.cause.Error()
+}
+
+func (e *SQLError) String() string {
+	return fmt.Sprintf("%v <%s>", e.Error(), text.CollapseSpaces(e.stmt))
 }
 
 func (e *SQLError) Unwrap() error {

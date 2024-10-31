@@ -10,6 +10,7 @@ import (
 	"github.com/bww/go-dbx/v1/persist/pql"
 	"github.com/bww/go-dbx/v1/persist/registry"
 
+	"database/sql"
 	dbsql "database/sql"
 )
 
@@ -94,6 +95,14 @@ func (p *persister) Param(name string) interface{} {
 		return m[name]
 	}
 	return nil
+}
+
+func (p *persister) Exec(query string, args ...interface{}) (sql.Result, error) {
+	r, err := p.Context.Exec(query, args...)
+	if err != nil {
+		return nil, errors.NewWithSQL(err, query)
+	}
+	return r, nil
 }
 
 func (p *persister) Fetch(table string, ent, id interface{}) error {
