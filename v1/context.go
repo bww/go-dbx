@@ -12,6 +12,8 @@ import (
 // methods of sqlx.DB and sqlx.Tx so they can be used interchangably.
 type Context interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
+	Prepare(query string) (*sql.Stmt, error)
+	Preparex(query string) (*sqlx.Stmt, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Queryx(query string, args ...interface{}) (*sqlx.Rows, error)
@@ -23,6 +25,20 @@ func (d *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 		d.log.Printf("dbx/exec: (%T) [%s] %v\n", d, text.CollapseSpaces(query), args)
 	}
 	return d.DB.Exec(query, args...)
+}
+
+func (d *DB) Prepare(query string) (*sql.Stmt, error) {
+	if d.debug {
+		d.log.Printf("dbx/prepare: (%T) [%s]\n", d, text.CollapseSpaces(query))
+	}
+	return d.DB.Prepare(query)
+}
+
+func (d *DB) Preparex(query string) (*sqlx.Stmt, error) {
+	if d.debug {
+		d.log.Printf("dbx/prepare: (%T) [%s]\n", d, text.CollapseSpaces(query))
+	}
+	return d.DB.Preparex(query)
 }
 
 func (d *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {

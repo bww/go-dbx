@@ -9,6 +9,7 @@ import (
 	"github.com/bww/go-dbx/v1/persist/ident"
 	"github.com/bww/go-dbx/v1/persist/pql"
 	"github.com/bww/go-dbx/v1/persist/registry"
+	"github.com/jmoiron/sqlx"
 
 	"database/sql"
 	dbsql "database/sql"
@@ -38,7 +39,7 @@ type Persister interface {
 	Param(name string) interface{}
 	Store(string, interface{}, []string) error
 	Fetch(string, interface{}, interface{}) error
-	Count(string, ...interface{}) (int, error)
+	Statement(string) (Stmt, error)
 	Select(interface{}, string, ...interface{}) error
 	Delete(string, interface{}) error
 	DeleteWithID(string, reflect.Type, interface{}) error
@@ -97,6 +98,29 @@ func (p *persister) Param(name string) interface{} {
 	return nil
 }
 
+func (p *persister) typeMeta(val reflect.Value) (typ reflect.Type, many bool) {
+	ind := reflect.Indirect(val)
+	switch ind.Kind() {
+	case reflect.Slice:
+		many = true
+	default:
+		many = false
+	}
+	if many {
+		typ = ind.Type().Elem()
+	} else {
+		typ = ind.Type()
+	}
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	return
+}
+
+func (p *persister) typeCols(typ reflect.Type) []string {
+	return p.fm.ColumnsForType(typ, entity.ExcludeFromPQL)
+}
+
 func (p *persister) Exec(query string, args ...interface{}) (sql.Result, error) {
 	r, err := p.Context.Exec(query, args...)
 	if err != nil {
@@ -140,40 +164,19 @@ func (p *persister) Fetch(table string, ent, id interface{}) error {
 	return nil
 }
 
-func (p *persister) Count(query string, args ...interface{}) (int, error) {
-	var n int
-
-	err := p.Context.QueryRow(query, args...).Scan(&n)
-	if err != nil {
-		return -1, errors.NewWithSQL(err, query)
-	}
-
-	return n, nil
+func (p *persister) Statement(query string) (Stmt, error) {
+	return &stmt{
+		pst: p,
+		pql: query, // the query is provided as PQL, which will be expanded by the statement to SQL
+	}, nil
 }
 
 func (p *persister) Select(ent interface{}, query string, args ...interface{}) error {
-	val := reflect.ValueOf(ent)
-	ind := reflect.Indirect(val)
-
-	var many bool
-	switch ind.Kind() {
-	case reflect.Slice:
-		many = true
-	default:
-		many = false
-	}
-
-	var typ reflect.Type
-	if many {
-		typ = ind.Type().Elem()
-	} else {
-		typ = ind.Type()
-	}
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-
-	cols := p.fm.ColumnsForType(typ, entity.ExcludeFromPQL)
+	var (
+		val       = reflect.ValueOf(ent)
+		typ, many = p.typeMeta(val)
+		cols      = p.typeCols(typ)
+	)
 
 	prg, err := pql.Parse(query)
 	if err != nil {
@@ -185,15 +188,17 @@ func (p *persister) Select(ent interface{}, query string, args ...interface{}) e
 	}
 
 	if many {
-		return p.selectMany(ent, val, cols, sql, args)
+		raws, err := p.Context.Queryx(sql, args...)
+		if err != nil {
+			return errors.NewWithSQL(err, sql)
+		}
+		return p.selectMany(ent, val, cols, sql, raws)
 	} else {
-		return p.selectOne(ent, val, cols, sql, args)
+		return p.selectOne(ent, val, cols, sql, p.Context.QueryRowx(sql, args...))
 	}
 }
 
-func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
-
-	raw := p.Context.QueryRowx(sql, args...)
+func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string, sql string, raw *sqlx.Row) error {
 	row := newRow(raw, p.fm)
 	err := row.ScanStruct(ent)
 	if err == dbsql.ErrNoRows {
@@ -216,14 +221,9 @@ func (p *persister) selectOne(ent interface{}, val reflect.Value, cols []string,
 	return nil
 }
 
-func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string, sql string, args []interface{}) error {
+func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string, sql string, raws *sqlx.Rows) error {
 	if val.Kind() != reflect.Ptr {
 		return dbx.ErrNotAPointer
-	}
-
-	raws, err := p.Context.Queryx(sql, args...)
-	if err != nil {
-		return errors.NewWithSQL(err, sql)
 	}
 
 	rows := newRows(raws, p.fm)
@@ -269,7 +269,7 @@ func (p *persister) selectMany(ent interface{}, val reflect.Value, cols []string
 		eval = reflect.Append(eval, elem)
 	}
 
-	err, rows = rows.Close(), nil
+	err, rows := rows.Close(), nil
 	if err != nil {
 		return errors.NewWithSQL(err, sql)
 	}
